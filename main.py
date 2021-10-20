@@ -10,6 +10,4 @@ TOKEN = os.getenv("BOT_TOKEN")
 client = discord.Client()
 test_channel_id = 873181947583660054
 
-#client.run(TOKEN)
-
-asyncio.run(client.start(TOKEN))
+client.run(TOKEN)
