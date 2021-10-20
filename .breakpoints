@@ -1,0 +1,20 @@
+{
+  "files": {
+    "discord/commands/slash_command.py": [
+      {
+        "id": "59da85d2-b2b0-4abb-a1b7-6a5c199e78cc",
+        "line": 1,
+        "version": 755,
+        "index": 0
+      }
+    ],
+    "main.py": [
+      {
+        "id": "2560efd8-1c6d-40b6-900f-2a105efb1c36",
+        "line": 11,
+        "version": 1392,
+        "index": 192
+      }
+    ]
+  }
+}
