@@ -1,5 +1,3 @@
-from discord import Channel
-from discord import Message
 import discord
 
 import os
