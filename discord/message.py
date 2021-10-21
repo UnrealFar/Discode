@@ -9,13 +9,6 @@ class Message:
         self.token = token
         self.content = {"content": f"{content}"}
 
-    async def send_message(self):
-        msg = self.content
-        headers = {"Authorization": f"Bot {self.token}"}
-        async with aiohttp.ClientSession(headers = headers) as ses:
-            async with ses.post(url = f"{base_url}/channels/{self.channel_id}/messages", json = msg):
-                pass
-
     async def edit(self, channel_id, message_id, content):
         msg = {"content": content}
         ch_id = channel_id

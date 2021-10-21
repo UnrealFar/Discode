@@ -1,4 +1,5 @@
 import aiohttp
+import asyncio
 
 class Route:
 
@@ -21,16 +22,15 @@ class HTTPClient:
   
     def __init__(
         self,
-        token: str,
-        params: str
+        token: str
     ):
-        self.params = params
         self.token = token
-        self.__session: aiohttp.ClientSession
+        self.session = aiohttp.ClientSession()
 
     async def request(
         self,
-        route: Route
+        route: Route,
+        j: dict = {}
         ):
         url = route.url
         method = route.method
@@ -39,17 +39,18 @@ class HTTPClient:
         if self.token is not None:
             headers["Authorization"] = "Bot " + self.token
 
-        async with self.__session.request(method, url) as response:
-            data = await response
+        async with self.session.request(method = method, url = url, json = j) as response:
+            data = await response.json()
 
             if 300 > response.status >= 200:
+                await asyncio.create_task()
                 return data
 
             if response.status == 429:
                 return "Ratelimit exceeded!"
 
     async def static_login(self, token: str):
-        self.__session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession()
         old_token = self.token
         self.token = token
 
