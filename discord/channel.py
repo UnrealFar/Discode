@@ -22,10 +22,13 @@ class Channel:
     async def send(self, message: str, embed: Embed = None):
         tosend = {}
         tosend["content"] = message
+
         if embed is not None:
             try:
-                tosend["embeds"].append(embed.embed)
+                emb = embed.get_embed
+                tosend["embeds"].append(emb)
             except:
-                tosend["embeds"] = [embed.embed]
+                emb = embed.get_embed
+                tosend["embeds"] = [emb]
 
-        await self.http(token = str(self.token)).request(Route("POST", f"/channels/{self.channel_id}/messages"), j = tosend)
+        await self.http(token = str(self.token)).request("POST", f"/channels/{self.channel_id}/messages", json = tosend)

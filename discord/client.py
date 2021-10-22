@@ -17,9 +17,3 @@ class Client:
     @property
     def get_token(self):
         return self.token
-
-    async def login(self):
-        await self.http.static_login(token = self.token)
-
-    async def start(self):
-        await self.login()

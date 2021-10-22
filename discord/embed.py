@@ -1,15 +1,15 @@
-from .colour import Colour
-
 class Embed:
-    def __init__(self, title = None, description = None, colour = None):
+    def __init__(self, title = None, description = None):
         self.title = title
         self.description = description
-        self.colour: hex = colour
         self.embed = {
             "title": title,
-            "description": description,
-            "colour": hex
+            "description": description
         }
+
+    @property
+    def get_embed(self):
+        return self.embed
 
     def create_field(self, name: str, value: str, inline: bool= False):
         field = {

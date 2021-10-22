@@ -4,8 +4,8 @@ class Colour:
 
     @property
     def red():
-        return 0xe74c3c
+        return
 
     @property
     def green():
-        return 0x2ecc71
+        return
