@@ -1,61 +1,53 @@
 import websocket
 import json
-import os
 import threading
+import time
 import asyncio
+import os
 
-def send_json_request(ws, request):
-    ws.send(json.dumps(request))
+class DiscordWebSocket:
+    def __init__(self, token: str):
+        self.token: str = token.strip()
+        self.url: str = "wss://gateway.discord.gg/?v9&encoding=json"
+        self.ws = websocket.WebSocket()
 
-def receive_json_response(ws):
-    response = ws.recv()
-    if response:
-        return json.loads(response)
+    def send_json_request(self, ws, request):
+        ws.send(json.dumps(request))
 
-def heartbeat(interval, ws):
-    print("Heartbeat begin!")
-    while True:
-        asyncio.run(asyncio.sleep(interval))
-        heartbeatJSON = {
-            "op": 1,
-            "d": "null"
+    def recieve_json_response(self, ws):
+        response = ws.recv()
+        if response:
+            return json.loads(response)
+
+    def heartbeat(self, interval, ws):
+        while True:
+            time.sleep(interval)
+            heartbeatJSON = {
+                "op": 1,
+                "d": "null"
+            }
+            asyncio.run(self.send_json_request(ws, heartbeatJSON))
+
+    async def connect(self):
+        self.ws.connect(self.url)
+        event = self.recieve_json_response(self.ws)
+        heartbeat_interval = event['d']['heartbeat_interval'] / 1000
+        threading._start_new_thread(self.heartbeat, (heartbeat_interval, self.ws))
+        payload = {
+            "op": 2,
+            "d": {
+                "token": self.token,
+                "properties": {}
+            }
         }
-        send_json_request(ws, heartbeatJSON)
-        print("Heartbeat sent!")
+        self.send_json_request(self.ws, payload)
 
-ws = websocket.WebSocket()
-ws.connect("wss://gateway.discord.gg/?v9&encording=json")
+    def event(self):
+        while True:
+            event = self.recieve_json_response(self.ws)
 
-event = receive_json_response(ws)
+            try:
+                print(f'{event}')
 
-heartbeat_interval = event["d"]["heartbeat_interval"] / 1000
-
-threading._start_new_thread(heartbeat, (heartbeat_interval, ws))
-
-token = os.getenv("BOT_TOKEN")
-
-payload = {
-    "op": 2,
-    "d": {
-        "token": token,
-        "properties": {
-            "$os": "linux",
-            "$browser": "chrome",
-            "$device": "pc"
-        }
-    }
-}
-
-send_json_request(ws, payload)
-
-while True:
-    event = receive_json_response(ws)
-
-    try:
-        print(f"{event['d']['author']['username']}: {event['d']['content']}")
-        op_code = event["op"]
-        if op_code == 11:
-            print("Heartbeat received")
-
-    except:
-        pass
+            except:
+                pass

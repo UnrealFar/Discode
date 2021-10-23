@@ -2,7 +2,6 @@ import aiohttp
 import asyncio
 import os
 
-from .http_client import Route, HTTPClient
 from .client import Client
 from .message import Message
 from .embed import Embed
@@ -15,7 +14,8 @@ class Channel:
         channel_id: int,
     ):
         self.channel_id = channel_id
-        self.http = HTTPClient
+        self.client = Client()
+        self.http = self.client.http
 
     async def send(self, message: str, embed: Embed = None):
         tosend = {}
@@ -29,4 +29,4 @@ class Channel:
                 emb = embed.get_embed
                 tosend["embeds"] = [emb]
 
-        await self.http(token = str(self.token)).request("POST", f"/channels/{self.channel_id}/messages", json = tosend)
+        await self.http.request("POST", f"/channels/{self.channel_id}/messages", json = tosend)

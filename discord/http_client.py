@@ -1,17 +1,8 @@
+from typing import Optional
 import aiohttp
 import asyncio
 
-class Route:
-
-    def __init__(
-        self
-        ):
-        self.version: int = 9
-        self.url = f"{self.base_url}/v{self.version}/{self.path}"
-
-    @property
-    def bucket(self) -> str:
-        return
+from .gateway import DiscordWebSocket
 
 class HTTPClient:
   
@@ -20,6 +11,7 @@ class HTTPClient:
         token: str
     ):
         self.token = token
+        self.ws = DiscordWebSocket(self.token)
 
     async def request(
         self,
@@ -52,3 +44,7 @@ class HTTPClient:
                 async with session.patch(urle = url, json = json, headers = headers) as response:
                     data = await response.json()
                     return data
+
+    async def static_login(self, token):
+        await self.ws.connect()
+        self.ws.event()
