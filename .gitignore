@@ -1,0 +1,6 @@
+*.replit
+**/__pychache__
+__pychache__/*
+*poetry.lock
+*pyproject.toml
+discode/*gateway.py

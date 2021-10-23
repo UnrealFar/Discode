@@ -1,17 +1,18 @@
 class Embed:
-    def __init__(self, title = None, description = None):
+    def __init__(self, title = None, description = None, colour = None):
         self.title = title
         self.description = description
         self.embed = {
             "title": title,
-            "description": description
+            "description": description,
+            "colour": colour
         }
 
     @property
     def get_embed(self):
         return self.embed
 
-    def create_field(self, name: str, value: str, inline: bool= False):
+    def add_field(self, name: str, value: str, inline: bool= False):
         field = {
             "name": name,
             "value": value,
@@ -21,3 +22,10 @@ class Embed:
             self.embed["fields"].append(field)
         except:
             self.embed["fields"] = [field]
+
+    def set_footer(self, text: str, icon_url: str = None):
+        footer = {
+            "text": text,
+            "icon_url": icon_url
+        }
+        self.embed["footer"] = footer

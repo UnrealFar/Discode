@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 import signal
 
-from .http import HTTPClient
+from .http_client import HTTPClient
 
 base_url = "https://discord.com/api/v9"
 

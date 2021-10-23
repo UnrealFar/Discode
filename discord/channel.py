@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 import os
 
-from .http import Route, HTTPClient
+from .http_client import Route, HTTPClient
 from .client import Client
 from .message import Message
 from .embed import Embed
@@ -13,10 +13,8 @@ class Channel:
     def __init__(
         self,
         channel_id: int,
-        token: str
     ):
         self.channel_id = channel_id
-        self.token = token
         self.http = HTTPClient
 
     async def send(self, message: str, embed: Embed = None):

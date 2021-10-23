@@ -1,11 +1,13 @@
+from typing import Type, TypeVar
+
+CT = TypeVar
+
 class Colour:
-    def __init__(self):
-        pass
 
-    @property
-    def red():
-        return
+    @classmethod
+    def red(cls: Type[CT]) -> CT:
+        return cls(0xe74c3c)
 
-    @property
-    def green():
-        return
+    @classmethod
+    def green(cls: Type[CT]) -> CT:
+        return cls(0x2ecc71)
