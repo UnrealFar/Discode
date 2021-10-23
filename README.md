@@ -4,19 +4,14 @@ A Discord API wrapper that is not yet ready for general use
 **Usage**
 ```py
 import discord
+from discord import Client, Channel, Embed
 
 import os
 import asyncio
 
-TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = "Your Token Here"
 
-client = discord.Client(TOKEN)
+client = Client()
 
-test_channel_id = 873181947583660054
-channel = Channel(test_channel_id)
-
-embed = discord.Embed(title = "Hello!", description = "Hi!", colour = discord.Colour.red())
-embed.add_field(name = "This is a field name", value = "This is a field value")
-
-asyncio.run(channel.send(message = "Hi!", embed = embed))
+client.run(TOKEN)
 ```

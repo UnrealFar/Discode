@@ -5,6 +5,8 @@ import time
 import asyncio
 import os
 
+from .message import Message
+
 class DiscordWebSocket:
     def __init__(self, token: str):
         self.token: str = token.strip()
@@ -53,3 +55,6 @@ class DiscordWebSocket:
 
                 except:
                     pass
+
+            def on_message(message):
+                return Message()
