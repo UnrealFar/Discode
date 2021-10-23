@@ -21,7 +21,7 @@ class DiscordWebSocket:
 
     def heartbeat(self, interval, ws):
         while True:
-            time.sleep(interval)
+            asyncio.run(asyncio.sleep(interval))
             heartbeatJSON = {
                 "op": 1,
                 "d": "null"
@@ -46,8 +46,10 @@ class DiscordWebSocket:
         while True:
             event = self.recieve_json_response(self.ws)
 
-            try:
-                print(f'{event}')
+            if event is not None:
 
-            except:
-                pass
+                try:
+                    print(f'{event}')
+
+                except:
+                    pass

@@ -10,8 +10,7 @@ class HTTPClient:
         self,
         token: str
     ):
-        self.token = token
-        self.ws = DiscordWebSocket(self.token)
+        self.token: str = token.strip()
 
     async def request(
         self,
@@ -46,5 +45,6 @@ class HTTPClient:
                     return data
 
     async def static_login(self, token):
-        await self.ws.connect()
-        self.ws.event()
+        ws = DiscordWebSocket(token.strip())
+        await ws.connect()
+        ws.event()
