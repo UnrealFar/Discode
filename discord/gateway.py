@@ -26,7 +26,7 @@ class DiscordWebSocket:
                 "op": 1,
                 "d": "null"
             }
-            asyncio.run(self.send_json_request(ws, heartbeatJSON))
+            self.send_json_request(ws, heartbeatJSON)
 
     async def connect(self):
         self.ws.connect(self.url)
