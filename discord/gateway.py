@@ -46,7 +46,7 @@ class DiscordWebSocket:
         while True:
             event = self.recieve_json_response(self.ws)
 
-            if event is not None:
+            if event['t'] != None:
 
                 try:
                     print(f'{event}')
