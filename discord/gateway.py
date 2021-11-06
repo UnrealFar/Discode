@@ -16,7 +16,7 @@ class DiscordWebSocket:
     def send_json_request(self, ws, request):
         ws.send(json.dumps(request))
 
-    def recieve_json_response(self, ws):
+    def receive_json_response(self, ws):
         response = ws.recv()
         if response:
             return json.loads(response)
