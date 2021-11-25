@@ -3,3 +3,4 @@
 __pychache__/*
 *poetry.lock
 *pyproject.toml
+.pytest_chace/*
