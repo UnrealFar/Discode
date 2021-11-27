@@ -4,16 +4,16 @@
       {
         "id": "5b671ae6-5d41-4fa6-8438-6b1afdfcd5bd",
         "line": 1,
-        "version": 17,
+        "version": 99,
         "index": 0
       }
     ],
     "discode/client.py": [
       {
         "id": "874e0ebd-1759-4701-8635-f743a9071b6d",
-        "line": 3,
-        "version": 4681,
-        "index": 53
+        "line": 2,
+        "version": 5898,
+        "index": 52
       }
     ]
   }
