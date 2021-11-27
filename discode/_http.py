@@ -49,8 +49,8 @@ class HTTP:
         self.token = token
         try:
             data = await self.request("GET", "/users/@me")
-        except:
-            raise
+        except Exception as e:
+            raise e
 
         data["http"] = self
         self.user = ClientUser(loop=self.loop, data=data)
