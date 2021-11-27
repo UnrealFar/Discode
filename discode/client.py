@@ -23,11 +23,14 @@ class Client:
     """
 
     def __init__(self,
-                 loop: Optional[asyncio.AbstractEventLoop] = None,
+                 message_limit: Optional[int] = 100,
+                 loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
                  **kwargs
     ):
-        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
+        self.loop: asyncio.AbstractEventLoop = loop
         self.__events: dict = {}
+        self.message_cache = []
+        self.message_limit = message_limit
         self.intents = kwargs.get("intents", 0)
 
     @property

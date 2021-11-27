@@ -15,6 +15,14 @@ async def ready():
 
 @client.on_event("message")
 async def on_message(message: discode.Message):
-    print(message.author, "has posted:\n", message.content)
+    print(message.author, "has sent:\n", message.content)
+
+@client.on_event("message edit")
+async def message_edit(before: discode.Message, after: discode.Message):
+    print(
+        "Message edited by", after.author,
+        "\nOld content:", before.content,
+        "\nNew content:", after.content
+    )
 
 client.start(TOKEN)

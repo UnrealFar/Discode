@@ -21,6 +21,7 @@ class WS:
         self.session = self.http.session
         self.token = data.get("token")
         self.intents = data.get("intents", 0)
+        self.message_cache= self.http.client.message_cache
 
     async def get_ws(self):
         ws = await websockets.connect(
@@ -82,7 +83,25 @@ class WS:
                         self.loop,
                         data = msgdata
                     )
+                    
+                    self.message_cache.append(message)
+                    if len(self.message_cache) == self.http.client.message_limit:
+                        self.message_cache.pop(0)
                     await self.dispatch("message", message)
+
+                if data["t"] == "MESSAGE_UPDATE":
+                    for msg in self.message_cache:
+                        if data["d"]["id"] == msg.id:
+                            beforedata = msg.data
+                            before = Message(
+                                loop = self.loop,
+                                data = beforedata
+                            )
+                            after = msg
+                            after.content = data["d"]["content"]
+                            after.edited_at = data["d"]["edited_timestamp"]
+                            await self.dispatch("message edit", before, after)
+                            break
 
     async def heartbeat(self, interval: float):
         while True:
