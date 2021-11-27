@@ -59,7 +59,6 @@ class WS:
     async def listen(self):
         async for data in self.ws:
             data = json.loads(data)
-            print(data)
             seq = data.get("s")
             if seq is not None:
                 self.seq = seq
