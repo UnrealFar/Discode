@@ -1,4 +1,3 @@
-import zlib
 import websockets
 import asyncio
 import json
