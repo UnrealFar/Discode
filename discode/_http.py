@@ -1,32 +1,29 @@
 import asyncio
-from typing import Optional
+from typing import Optional, Union
 import aiohttp
 
 from .user import ClientUser
+from .intents import Intents
+from .message import Message
+from .channel import TextChannel
 from . import gw
 
 __all__ = ("HTTP",)
 
 
 class HTTP:
-    def __init__(
-        self,
-        loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(),
-        **kwargs
-    ):
+    def __init__(self, loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(), **kwargs):
         self.loop: asyncio.AbstractEventLoop = loop
-        self.session: aiohttp.ClientSession = aiohttp.ClientSession(loop=self.loop)
+        self.session: aiohttp.ClientSession = aiohttp.ClientSession()
         self.client: ClientUser = kwargs.get("client")
         self.api_url = "https://discord.com/api/v9"
-        self.intents = kwargs.get("intents", 0)
+        self.intents: Intents = kwargs.get("intents")
         self.user_agent = "DiscordBot made with Discode"
 
-    async def request(self, method: str, endpoint: str, params: dict = {}):
-        headers: dict = {"Authorization": "Bot " + self.token}
+    async def request(self, method: str, endpoint: str, **kwargs):
+        headers = {"Authorization": "Bot " + self.token}
 
-        async with self.session.request(
-            method=method, url=self.api_url + endpoint, params=params, headers=headers
-        ) as resp:
+        async with self.session.request(method=method, url=self.api_url + endpoint, headers=headers, **kwargs) as resp:
             response = await resp.json()
 
             return response
@@ -40,7 +37,7 @@ class HTTP:
             "token": self.token,
             "intents": self.intents,
             "http": self,
-            "dispatch": self.client.dispatch
+            "dispatch": self.client.dispatch,
         }
         self.ws = gw.WS(data)
         await self.ws.handle()
@@ -61,5 +58,23 @@ class HTTP:
         if not self.session.closed:
             await self.session.close()
 
-    async def get_user(self, user_id: int):
-        await self.request()
+    async def send_message(self, channel_id, **kwargs) -> Message:
+        data = {}
+
+        if kwargs.get("content", None):
+            data["content"] = str(kwargs.pop("content"))
+
+        if kwargs.get("embed", None):
+            data["embeds"] = [kwargs.pop("embed")]
+
+        if kwargs.get("embeds", None):
+            data["embeds"] = kwargs.pop("embeds")
+
+        msgdata = await self.request("POST", f"/channels/{channel_id}/messages", data=data)
+        msgdata["http"] = self
+        return Message(loop=self.loop, data=msgdata)
+
+    async def fetch_channel(self, channel_id: int) -> Union[TextChannel]:
+        data = await self.request("GET", f"/channels/{channel_id}")
+        data["http"] = self
+        return TextChannel(loop=self.loop, data=data)

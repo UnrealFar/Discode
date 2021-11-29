@@ -8,8 +8,7 @@ __all__ = (
 
 
 class User:
-    r"""Represents a Discord user.
-    """
+    r"""Represents a Discord user."""
 
     def __init__(self, loop: asyncio.AbstractEventLoop, data: dict):
         self.data: dict = data
@@ -27,22 +26,25 @@ class User:
         self.http = data.get("http")
 
     def __repr__(self):
-        return f"User id = {self.id} name = {self.name} discriminator = {self.discriminator}"
+        return f"<User: id={self.id} name={self.name} discriminator={self.discriminator}>"
 
     def __str__(self):
         return f"{self.name}#{self.discriminator}"
 
     @property
     def mention(self):
+        """:class:`str`: Returns the user in a discord mention format i.e '@<{USER_ID}>.'"""
         return f"@<{self.id}>"
 
     @property
     def avatar_url(self):
+        """:class:`str`: Returns the user's avatar url."""
         av = "https://cdn.discordapp.com/avatars/" + self.id + "/" + self.__avatar + ".png"
         return av
 
     @property
     def banner_url(self):
+        """:class:`str`: Returns the user's banner url."""
         ba = "https://cdn.discord.com/banners/" + self.id + "/" + self.__banner + ".png"
         return ba
 
