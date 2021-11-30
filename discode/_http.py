@@ -65,13 +65,19 @@ class HTTP:
             data["content"] = str(kwargs.pop("content"))
 
         if kwargs.get("embed", None):
-            data["embeds"] = [kwargs.pop("embed")]
+            data["embeds"] = [kwargs.pop("embed").data]
 
         if kwargs.get("embeds", None):
-            data["embeds"] = kwargs.pop("embeds")
+            if "embeds" not in data:
+                data["embeds"] = []
+            embeds = kwargs.pop("embeds")
+            for embed in embeds:
+                data["embeds"].append(embed.data)
 
-        msgdata = await self.request("POST", f"/channels/{channel_id}/messages", data=data)
+        print(data)
+        msgdata = await self.request("POST", f"/channels/{channel_id}/messages", json=data)
         msgdata["http"] = self
+        print(msgdata)
         return Message(loop=self.loop, data=msgdata)
 
     async def fetch_channel(self, channel_id: int) -> Union[TextChannel]:

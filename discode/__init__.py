@@ -12,7 +12,7 @@ from .errors import *
 __name__ = "Discode"
 __author__ = "TheFarGG"
 __copyright__ = "Copyright 2021-present TheFarGG"
-__version__ = "0.0.0"
+__version__ = "0.0.1"
 
 
 class VersionInfo(NamedTuple):

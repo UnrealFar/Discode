@@ -1,7 +1,9 @@
 import asyncio
 import discode
 import os
-import json
+from discode.embeds import Embed
+from discode.color import Color
+
 
 
 TOKEN = os.environ["BOT_TOKEN"]
@@ -25,27 +27,34 @@ async def ready():
 @client.on_event("message")
 async def on_message(message: discode.Message):
     print(message.author, "has sent:\n", message.content)
+    channel: discode.TextChannel = message.channel
     msg = message.content
+    print(message.author.id)
     if msg.startswith("d!"):
-        channel = message.channel
         if msg.startswith("ping", len(client.prefix)):
             latency = get_latency()
-            await channel.send(f"{latency}ms")
+            embed: Embed = Embed(title = "Pong!").add_field(
+                name = "My websocket ping",
+                value = f"{latency}ms"
+            ).set_footer(f"Requested by {message.author}")
+            await channel.send(embed = embed)
+
         elif msg.startswith("eval", len(client.prefix)):
-            if message.author.id not in [859996173943177226, 739443421202087966]:
+            if message.author.id not in [859996173943177226, 739443421202087966, 551257232143024139]:
                 return await channel.send("Only owners can do dis...")
             try:
                 data = msg[len(client.prefix):][4:]
-                exec(f"async def func():{data}")
-                resp = await eval("func()")
+                args = {
+                    "discode": discode,
+                    "message": message,
+                    "bot": client,
+                    "client": client
+                }
+                exec(f"async def func():{data}", args)
+                resp = await eval("func()", args)
                 await channel.send(resp)
             except Exception as error:
                 await channel.send(f"Error while excecuting code!\n{str(error)}")
-
-    elif msg.startswith("GUILD_TEST"):
-        for guild_id in client.guild_cache:
-            guild = client.guild_cache[message.guild_id]
-            print(guild.channels)
 
 @client.on_event("message edit")
 async def message_edit(before: discode.Message, after: discode.Message):

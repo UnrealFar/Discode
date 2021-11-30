@@ -12,8 +12,6 @@ class User:
 
     def __init__(self, loop: asyncio.AbstractEventLoop, data: dict):
         self.data: dict = data
-        self.id: int = data.get("id")
-        self.name: str = data.get("username")
         self.discriminator: int = data.get("discriminator")
         self.bio: str = data.get("bio")
         self.bot: bool = data.get("bot", False)
@@ -30,6 +28,14 @@ class User:
 
     def __str__(self):
         return f"{self.name}#{self.discriminator}"
+
+    @property
+    def id(self) -> int:
+        return int(self.data.get("id"))
+
+    @property
+    def name(self) -> str:
+        return self.data.get("username")
 
     @property
     def mention(self):

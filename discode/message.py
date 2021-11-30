@@ -15,13 +15,19 @@ class Message:
         self.data = data
         self.loop = loop
         self.http = data.get("http")
-        self.id: int = data.get("id")
-        self.content: str = data.get("content")
         self.created_at = data.get("timestamp")
         self.mentions = data.get("mentions")
         self.__author: dict = data.get("author")
         self.__member: dict = data.get("member")
         self.edited_at = data.get("edited_timestamp")
+
+    @property
+    def id(self) -> int:
+        return int(self.data.get("id"))
+
+    @property
+    def content(self) -> str:
+        return self.data.get("content")
 
     @property
     def author(self) -> User:
@@ -37,10 +43,6 @@ class Message:
         return self.http.client.get_guild(self.guild_id)
 
     @property
-    def channel(self) -> Union[Channel, TextChannel]:
-        return self.http.client.get_channel(self.channel_id, self.guild_id)
-
-    @property
     def guild_id(self) -> int:
         try:
             return int(self.data.get("guild_id"))
@@ -51,3 +53,7 @@ class Message:
         try:
             return int(self.data.get("channel_id"))
         except: return None
+    
+    @property
+    def channel(self):
+        return self.http.client.get_channel(self.channel_id, self.guild_id)

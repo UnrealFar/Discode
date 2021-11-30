@@ -27,7 +27,20 @@ class OP:
 
 class RateLimiter:
     def __init__(self, **kwargs):
-        pass
+        self.calls = []
+
+    async def reset(self):
+        while True:
+            await asyncio.sleep(60)
+            self.calls = []
+
+    async def new_call(self):
+        self.calls.append(time.perf_counter())
+
+    def is_ratelimited(self) -> bool:
+        if len(self.calls) >= 119:
+            return True
+        return False
 
 class WS:
     def __init__(self, data):
@@ -36,20 +49,23 @@ class WS:
         self.http = data.get("http")
         self.session = self.http.session
         self.token = data.get("token")
-        self.__latency = 0
-        self.last_hb_ack = 0
         self.intents: Intents = data.get("intents") or Intents.default()
         self.message_cache = self.http.client.message_cache
         self.guild_cache = self.http.client.guild_cache
+        self.ratelimiter = RateLimiter(ws = self, http = self.http)
+        self._last_send = 0
+        self._last_ack = 0
+
+    def get_latency(self):
+        return self._last_ack - self._last_send
 
     @property
-    def latency(self):
-        self.loop.create_task(self.ping())
-        return self.__latency
-
-    @property
-    def is_closed(self):
+    def is_closed(self) -> bool:
         return self.ws.closed
+
+    @property
+    def is_ratelimited(self) -> bool:
+        return self.ratelimiter.is_ratelimited()
 
     async def dispatch(self, *args, **kwargs):
         _dispatch = self.data.get("dispatch")
@@ -61,7 +77,7 @@ class WS:
 
     async def reconnect(self):
         try:
-            await self.ws.close()
+            await self.ws.close(code = 4002)
         except:
             pass
         _gateway_url = await self._get_gateway()
@@ -85,6 +101,7 @@ class WS:
     async def handle(self):
         self.ws = await self.get_ws()
         self.seq = None
+        self.loop.create_task(coro = self.ratelimiter.reset(), name = "RateLimitReseter")
         await self.listen()
 
     async def identify(self):
@@ -104,22 +121,21 @@ class WS:
         }
 
         await self.send_json(data)
-        await self.ping()
+
+    async def _send(self, data):
+        while True:
+            if not self.is_ratelimited:
+                break
+            pass
+        await self.ws.send(data)
+        await self.ratelimiter.new_call()
 
     async def send(self, data):
-        await self.ws.send(str(data))
+        self.loop.create_task(self._send(str(data)))
 
     async def send_json(self, data):
         data = json.dumps(data)
         await self.send(data)
-
-    async def ping(self):
-        oldtime = time.perf_counter()
-        pong = await self.ws.ping()
-        await pong
-        newtime = time.perf_counter()
-        self.__latency = newtime - oldtime
-    
 
     async def listen(self):
         async for data in self.ws:
@@ -142,7 +158,7 @@ class WS:
                 await self.send_json(self.hb_payload)
 
             elif op == OP.HEARTBEAT_ACK:
-                self.last_hb_ack = time.perf_counter()
+                self._last_ack = time.perf_counter()
 
             elif op == OP.DISPATCH:
                 if event == "READY":
@@ -160,14 +176,13 @@ class WS:
                     await self.dispatch("message", message)
 
                 elif event == "MESSAGE_UPDATE":
-                    msg = self.message_cache.get(data["d"]["id"], None)
+                    msg = self.message_cache.get(int(data["d"]["id"]), None)
                     if msg is not None:
                         beforedata = msg.data
-                        before = Message(loop=self.loop, data=beforedata)
+                        before = Message(loop=self.loop, data = beforedata)
+                        msg.data["content"] = data["d"].get("content")
+                        msg.data["edited_at"] = data["d"].get("edited_timestamp")
                         after = msg
-                        after.content = data["d"].get("content")
-                        after.edited_at = data["d"].get("edited_timestamp")
-                        self.message_cache[data["d"].get("id")] = after
                         await self.dispatch("message edit", before, after)
 
                 elif event == "GUILD_CREATE":
@@ -182,8 +197,9 @@ class WS:
 
     async def heartbeat(self, interval: float):
         while True:
-            if self.last_hb_ack > (interval + 10):
+            if self._last_ack > (time.perf_counter() + 5):
                 await self.reconnect()
 
             await self.send_json(self.hb_payload)
+            self._last_send = time.perf_counter()
             await asyncio.sleep(interval)

@@ -42,9 +42,9 @@ class Client:
     @property
     def latency(self) -> float:
         try:
-            return self.http.ws.latency
+            return self.http.ws.get_latency()
         except Exception:
-            return float("nan")
+            return None
 
     async def dispatch(self, event: str, *args, **kwargs):
         _event = self.__events.get(event, None)
@@ -94,8 +94,9 @@ class Client:
 
     def get_channel(self, channel_id: int, guild_id: int) -> Union[Channel, TextChannel, None]:
         guild = self.http.ws.guild_cache.get(guild_id)
-        if channel_id in guild.channels:
-            return guild.channels[guild.channels.index(channel_id)]
+        for channel in guild.channels:
+            if channel.id == channel_id:
+                return channel
         return None
 
     def get_guild(self, guild_id: int) -> Guild:
