@@ -50,7 +50,7 @@ class HTTP:
             raise
 
         data["http"] = self
-        self.user = ClientUser(loop=self.loop, data=data)
+        self.user = ClientUser(**data)
 
         return self.user
 
@@ -74,13 +74,11 @@ class HTTP:
             for embed in embeds:
                 data["embeds"].append(embed.data)
 
-        print(data)
         msgdata = await self.request("POST", f"/channels/{channel_id}/messages", json=data)
         msgdata["http"] = self
-        print(msgdata)
-        return Message(loop=self.loop, data=msgdata)
+        return Message(**msgdata)
 
     async def fetch_channel(self, channel_id: int) -> Union[TextChannel]:
         data = await self.request("GET", f"/channels/{channel_id}")
         data["http"] = self
-        return TextChannel(loop=self.loop, data=data)
+        return TextChannel(**data)

@@ -1,10 +1,7 @@
 import asyncio
 import discode
 import os
-from discode.embeds import Embed
-from discode.color import Color
-
-
+from discode import Embed, Colour
 
 TOKEN = os.environ["BOT_TOKEN"]
 
@@ -27,13 +24,14 @@ async def ready():
 @client.on_event("message")
 async def on_message(message: discode.Message):
     print(message.author, "has sent:\n", message.content)
+    print(f"\nComponents: {message.components}") if message.components != [] else None
     channel: discode.TextChannel = message.channel
     msg = message.content
     print(message.author.id)
     if msg.startswith("d!"):
         if msg.startswith("ping", len(client.prefix)):
             latency = get_latency()
-            embed: Embed = Embed(title = "Pong!").add_field(
+            embed: Embed = Embed(title = "Pong!", colour = Colour.red()).add_field(
                 name = "My websocket ping",
                 value = f"{latency}ms"
             ).set_footer(f"Requested by {message.author}")
@@ -48,7 +46,8 @@ async def on_message(message: discode.Message):
                     "discode": discode,
                     "message": message,
                     "bot": client,
-                    "client": client
+                    "client": client,
+                    "sengolda": "horni"
                 }
                 exec(f"async def func():{data}", args)
                 resp = await eval("func()", args)

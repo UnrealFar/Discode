@@ -1,21 +1,24 @@
 from typing import Union, Optional
 
-from .color import Colour
+from .colours import Colour, Color
 
 class Embed:
     def __init__(
         self,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        colour: Union[Colour, hex, int] = None
+        colour: Union[Colour, Color, hex, int] = None
     ):
         self.data = data = {}
         if title:
-            data["title"] = self.title = str(title)
+            data["title"] = str(title)
         if description:
-            data["description"] = self.description = str(description)
+            data["description"] = str(description)
         if colour:
-            data["colour"] = self.colour = getattr(colour, "value", colour)
+            if isinstance(colour, Colour):
+                data["colour"] = colour.value
+            else:
+                data["colour"] = colour
 
         data["fields"] = []
 

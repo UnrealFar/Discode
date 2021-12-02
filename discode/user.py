@@ -6,11 +6,10 @@ __all__ = (
     "ClientUser",
 )
 
-
 class User:
     r"""Represents a Discord user."""
 
-    def __init__(self, loop: asyncio.AbstractEventLoop, data: dict):
+    def __init__(self, **data):
         self.data: dict = data
         self.discriminator: int = data.get("discriminator")
         self.bio: str = data.get("bio")
@@ -20,8 +19,8 @@ class User:
         self.__avatar: str = data.get("avatar")
         self.__banner: str = data.get("banner", None)
 
-        self.loop = loop
         self.http = data.get("http")
+        self.loop = self.http.loop
 
     def __repr__(self):
         return f"<User: id={self.id} name={self.name} discriminator={self.discriminator}>"
@@ -57,17 +56,10 @@ class User:
 
 class ClientUser(User):
     r"""Represents the :class:`User` that is connected to Discord.
-
-    Parameters
-    ----------
-    loop: :class:`asyncio.AbstractEventLoop`
-        The :class:`asyncio.AbstractEventLoop` to use for asynchronous operations
-    session: :class:`aiohttp.ClientSession`
-        The :class:`aiohttp.ClientSession` to use to make requests to the Discord API
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop, data: dict):
-        super().__init__(loop, data)
+    def __init__(self, **data):
+        super().__init__(**data)
 
     def __repr__(self) -> str:
         return f"<ClientUser id = {self.id} name = {self.name} discriminator = {self.discriminator}>"

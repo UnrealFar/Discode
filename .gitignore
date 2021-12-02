@@ -1,4 +1,5 @@
 *.replit
+*.breakpoints
 **/__pychache__
 __pychache__/*
 *poetry.lock

@@ -7,6 +7,8 @@ from ._http import HTTP
 from .user import ClientUser
 from .guild import Guild
 from .channel import Channel, TextChannel
+from .member import Member
+from .intents import Intents
 
 __all__ = ("Client",)
 
@@ -18,6 +20,9 @@ class Client:
     ----------
     message_limit: :class:`int`
         The maximum amount of messages to have in the cache. Messages are cached to reduce api callsand prevent ratelimits.
+
+    chunk_at_startup: :class:`bool`
+        If the client should chunk up all the guild members on startup. Defaults to :class:`True`.
 
     Attributes
     -----------
@@ -31,13 +36,18 @@ class Client:
         self.loop: asyncio.AbstractEventLoop = kwargs.get("loop", asyncio.get_event_loop())
         self.__events: dict = {}
         self.message_cache = {}
-        self.guild_cache: List[Guild] = {}
+        self.guilds: List[Guild] = {}
+        self.chunk_guilds_at_startup: bool = True
         self.message_limit: int = kwargs.get("message_limit")
-        self.intents = kwargs.get("intents", 0)
+        self.intents = kwargs.get("intents", Intents.default())
 
     @property
     def user(self) -> ClientUser:
         return self.__user
+    
+    @property
+    def is_ready(self):
+        return self.http.ws._ready.is_set()
 
     @property
     def latency(self) -> float:
@@ -45,8 +55,13 @@ class Client:
             return self.http.ws.get_latency()
         except Exception:
             return None
+    
+    
 
     async def dispatch(self, event: str, *args, **kwargs):
+        if not self.is_ready and event != "ready":
+            return
+
         _event = self.__events.get(event, None)
         if _event is not None:
             try:
@@ -93,11 +108,19 @@ class Client:
         self.loop.run_until_complete(self.__start(token))
 
     def get_channel(self, channel_id: int, guild_id: int) -> Union[Channel, TextChannel, None]:
-        guild = self.http.ws.guild_cache.get(guild_id)
+        guild = self.guilds.get(guild_id)
         for channel in guild.channels:
             if channel.id == channel_id:
                 return channel
         return None
 
+    def get_member(self, member_id: int, guild_id: int) -> Member:
+        guild = self.guilds.get(guild_id)
+        for member in guild.members:
+            if member.id == member_id:
+                return member
+        return None
+
     def get_guild(self, guild_id: int) -> Guild:
-        return self.http.ws.guild_cache.get(guild_id)
+        return self.http.ws.guilds.get(guild_id)
+

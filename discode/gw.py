@@ -3,12 +3,14 @@ import asyncio
 import json
 import sys
 import time
+from collections import namedtuple
 
 from .message import Message
 from .intents import Intents
 from .guild import Guild
-from .errors import InvalidToken
+from .member import Member
 
+EventListener = namedtuple("EventListner", "event future")
 
 class OP:
     DISPATCH = 0
@@ -31,11 +33,14 @@ class RateLimiter:
 
     async def reset(self):
         while True:
-            await asyncio.sleep(60)
-            self.calls = []
+            await asyncio.sleep(0.51)
+            try:
+                self.calls.pop(0)
+            except:
+                pass
 
     async def new_call(self):
-        self.calls.append(time.perf_counter())
+        self.calls.append("")
 
     def is_ratelimited(self) -> bool:
         if len(self.calls) >= 119:
@@ -51,10 +56,12 @@ class WS:
         self.token = data.get("token")
         self.intents: Intents = data.get("intents") or Intents.default()
         self.message_cache = self.http.client.message_cache
-        self.guild_cache = self.http.client.guild_cache
+        self.guilds = self.http.client.guilds
         self.ratelimiter = RateLimiter(ws = self, http = self.http)
+        self._ready = asyncio.Event(loop=self.loop)
         self._last_send = 0
         self._last_ack = 0
+        self._event_listeners = []
 
     def get_latency(self):
         return self._last_ack - self._last_send
@@ -66,6 +73,11 @@ class WS:
     @property
     def is_ratelimited(self) -> bool:
         return self.ratelimiter.is_ratelimited()
+    
+    @property
+    def is_ready(self):
+        return self._ready.is_set()
+
 
     async def dispatch(self, *args, **kwargs):
         _dispatch = self.data.get("dispatch")
@@ -74,6 +86,12 @@ class WS:
     async def _get_gateway(self):
         _data = await self.http.request("GET", "/gateway")
         return _data.get("url") or "wss://gateway.discord.gg/"
+
+    def receive(self, event):
+        future = self.loop.create_future()
+        listener = EventListener(event, future)
+        self._event_listeners.append(listener)
+        return future
 
     async def reconnect(self):
         try:
@@ -88,7 +106,7 @@ class WS:
                 "d": {
                     "token": self.token,
                     "session_id": self.session_id,
-                    "seq": self.seq
+                    "seq": self.seq,
                 }
             }
         )
@@ -103,6 +121,10 @@ class WS:
         self.seq = None
         self.loop.create_task(coro = self.ratelimiter.reset(), name = "RateLimitReseter")
         await self.listen()
+    
+
+    async def wait_until_ready(self) -> None:
+        await self._ready.wait()
 
     async def identify(self):
         data = {
@@ -143,6 +165,7 @@ class WS:
             seq = data.get("s")
             event = data.get('t')
             op = data.get('op')
+
             if seq is not None:
                 self.seq = seq
 
@@ -163,12 +186,13 @@ class WS:
             elif op == OP.DISPATCH:
                 if event == "READY":
                     self.session_id = data["d"].get("session_id")
+                    self._ready.set()
                     await self.dispatch("ready")
 
                 elif event == "MESSAGE_CREATE":
                     msgdata = data["d"]
                     msgdata["http"] = self.http
-                    message = Message(self.loop, data=msgdata)
+                    message = Message(**msgdata)
                     self.message_cache[message.id] = message
                     if len(self.message_cache) == self.http.client.message_limit:
                         temp = list(self.message_cache)[0]
@@ -179,7 +203,7 @@ class WS:
                     msg = self.message_cache.get(int(data["d"]["id"]), None)
                     if msg is not None:
                         beforedata = msg.data
-                        before = Message(loop=self.loop, data = beforedata)
+                        before = Message(**beforedata)
                         msg.data["content"] = data["d"].get("content")
                         msg.data["edited_at"] = data["d"].get("edited_timestamp")
                         after = msg
@@ -187,9 +211,23 @@ class WS:
 
                 elif event == "GUILD_CREATE":
                     gdata = data.get("d")
+                    if self.http.client.chunk_guilds_at_startup:
+                        await self.chunk_guild(int(gdata.get("id")))
 
-                    guild = Guild(gdata, loop=self.loop, http=self.http)
-                    self.guild_cache[int(gdata.get("id"))] = guild
+                    gdata["http"] = self.http
+                    del gdata["members"]
+                    guild = Guild(**gdata)
+                    self.guilds[int(gdata.get("id"))] = guild
+
+                elif event == "GUILD_MEMBERS_CHUNK":
+                    guild = self.guilds[int(data.get("d").get("guild_id"))]
+                    for member in data.get("d").get("members"):
+                        member["http"] = self.http
+                        mem = Member(**member)
+                        try:
+                            guild._members.append(mem)
+                        except:
+                            guild._members = [mem]
 
     @property
     def hb_payload(self):
@@ -203,3 +241,18 @@ class WS:
             await self.send_json(self.hb_payload)
             self._last_send = time.perf_counter()
             await asyncio.sleep(interval)
+
+    async def chunk_guild(self, _id: int, *, query: str = "", limit: int = 0, presences: bool = False, nonce = None):
+        payload = {
+            "op": OP.REQUEST_MEMBERS,
+            "d": {
+                "guild_id": str(_id),
+                "query": query,
+                "limit": limit,
+            },
+        }
+        if nonce:
+            payload["d"]["nonce"] = nonce
+        if presences:
+            payload["presenses"] = presences
+        return await self.http.ws.send_json(payload)

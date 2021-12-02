@@ -1,19 +1,19 @@
 from typing import List
 
 from .channel import TextChannel
-
+from .member import Member
 
 class Guild:
-    def __init__(self, data: dict, loop, http):
-        self.http = http
-        self.loop = loop
+    def __init__(self, **data):
+        self.http = data.get("http")
+        self.loop = self.http.loop
         self.data = data
         self.icon = data.get("icon")
         self.splash = data.get("splash")
         self.discovery_splash: data.get("discovery_splash")
         self.emojis = data.get("emojis")
         self.description = data.get("description")
-        self.owner_id = data.get("owner_id")
+        self.owner_id = int(data.get("owner_id"))
         self.region = data.get("region")
         self.afk_channel_id = data.get("afk_channel_id")
         self.afk_timeout = data.get("afk_timeout")
@@ -24,7 +24,7 @@ class Guild:
         self.vanity_url_code = data.get("vanity_url_code")
         self.banner = data.get("banner")
         self.premium_tier = data.get("premium_tier")
-
+    
     @property
     def name(self) -> str:
         return self.data.get("name")
@@ -57,7 +57,12 @@ class Guild:
             return new_features
 
     @property
-    def channels(self) -> List:
+    def members(self) -> List[Member]:
+        if getattr(self, "_members", None):
+            return self._members
+
+    @property
+    def channels(self) -> List[TextChannel]:
         if getattr(self, "_channels", None):
             return self._channels
 
@@ -65,6 +70,6 @@ class Guild:
         for ch in self.data.get("channels"):
             ch["http"] = self.http
             if ch.get("type") == 0:
-                self._channels.append(TextChannel(loop = self.loop, data = ch))
+                self._channels.append(TextChannel(**ch))
 
         return self._channels
