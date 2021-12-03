@@ -1,7 +1,7 @@
 from setuptools import setup
 import re
 
-version = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]', open("discode/__init__.py").read(), re.MULTILINE)
+version = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]', open("discode/__init__.py").read(), re.MULTILINE).group(1)
 
 readme = open("README.md").read()
 
