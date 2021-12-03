@@ -47,7 +47,7 @@ async def on_message(message: discode.Message):
                     "message": message,
                     "bot": client,
                     "client": client,
-                    "sengolda": "horni"
+                    "import": __import__
                 }
                 exec(f"async def func():{data}", args)
                 resp = await eval("func()", args)
