@@ -6,7 +6,7 @@ LICENSE
 ---------
 MIT License
 
-Copyright (c) 2021 TheFarGG
+Copyright (c) 2021-Present TheFarGG
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,8 +45,8 @@ from .components import *
 
 __name__ = "Discode"
 __author__ = "TheFarGG"
-__copyright__ = "Copyright 2021-present TheFarGG"
-__version__ = "0.0.2"
+__copyright__ = "Copyright (c) 2021-present TheFarGG"
+__version__ = "0.0.2a"
 
 
 class VersionInfo(NamedTuple):

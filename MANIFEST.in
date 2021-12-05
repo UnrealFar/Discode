@@ -1,0 +1,4 @@
+include discode/*.py
+include LICENSE
+include *.py
+include requirements.txt

@@ -43,7 +43,7 @@ class RateLimiter:
         self.calls.append("")
 
     def is_ratelimited(self) -> bool:
-        if len(self.calls) >= 119:
+        if len(self.calls) >= 2:
             return True
         return False
 
