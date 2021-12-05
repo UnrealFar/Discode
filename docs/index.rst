@@ -11,7 +11,7 @@ Features
 - Easy to use
 - Asynchronous
 - Ratelimit handling
-- Based on Object Orieted Python
+- Based on Object Oriented Python
 
 Links
 --------
