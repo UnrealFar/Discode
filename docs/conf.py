@@ -1,6 +1,10 @@
 # Config file for docs
 
 import re
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(".."))
 
 project = "Discode"
 
@@ -22,6 +26,7 @@ extensions = [
 
 autodoc_member_order = "bysource"
 autodoc_typehints = "none"
+autodoc_inherit_docstrings = False
 
 master_doc = "index"
 
@@ -31,10 +36,11 @@ extlinks = {
 
 templates_path = ['_templates']
 
-language = 'english'
+language = 'en'
 
 exclude_patterns = []
 
-html_theme = 'alabaster'
+html_show_sphinx = False
+html_theme = "groundwork"
 
 html_static_path = ['_static']

@@ -28,8 +28,6 @@ class Client:
     -----------
     loop: :class:`asyncio.AbstractEventLoop`
         The :class:`asyncio.AbstractEventLoop` to be used for asynchronous functions.
-    ws: :class: `DiscordWS`
-        The :class:`DiscordWS` to be used for connectiong to the gateway.
     """
 
     def __init__(self, **kwargs):
@@ -43,6 +41,8 @@ class Client:
 
     @property
     def user(self) -> ClientUser:
+        r"""Returns the :class:`ClientUser` connected to the Discord Gateway.
+        """
         return self.__user
     
     @property
@@ -93,7 +93,7 @@ class Client:
 
         return decorator
 
-    async def __start(self, token: str):
+    async def start_task(self, token: str):
         self.token = token.strip()
 
         loop = self.loop
@@ -104,8 +104,16 @@ class Client:
 
         await self.http.connect()
 
-    def start(self, token):
-        self.loop.run_until_complete(self.__start(token))
+    def start(self, token: str):
+        r"""Connects to the Discord Gateway along with the REST API.
+        It is recommended to use this function to start your bot / client.
+        """
+        loop = self.loop
+        loop.create_task(self.start_task(token))
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            pass
 
     def get_channel(self, channel_id: int, guild_id: int) -> Union[Channel, TextChannel, None]:
         guild = self.guilds.get(guild_id)

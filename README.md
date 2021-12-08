@@ -19,5 +19,5 @@ async def ready():
 async def message(message: discode.Message):
     print(message.content)
 
-client.start()
+client.start("YOUR-TOKEN-HERE")
 ```

@@ -35,7 +35,7 @@ setup(
     long_description_content_type = "text/markdown",
     include_package_data = True,
     install_requires = requirements,
-    extras_require = {"docs": ["sphinx>=4.0.2"]},
+    extras_require = {"docs": ["sphinx", "groundwork-sphinx-theme"]},
     python_requires = ">=3.7.0",
     classifiers = classifiers,
     keywords = "Discode, discode, Discord, discord"

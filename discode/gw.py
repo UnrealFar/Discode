@@ -3,14 +3,11 @@ import asyncio
 import json
 import sys
 import time
-from collections import namedtuple
 
 from .message import Message
 from .intents import Intents
 from .guild import Guild
 from .member import Member
-
-EventListener = namedtuple("EventListner", "event future")
 
 class OP:
     DISPATCH = 0
@@ -31,21 +28,16 @@ class RateLimiter:
     def __init__(self, **kwargs):
         self.calls = []
 
-    async def reset(self):
-        while True:
-            await asyncio.sleep(0.51)
-            try:
-                self.calls.pop(0)
-            except:
-                pass
-
-    async def new_call(self):
+    def new_call(self):
         self.calls.append("")
 
-    def is_ratelimited(self) -> bool:
-        if len(self.calls) >= 2:
-            return True
-        return False
+    def block(self):
+        return # uuh lets ignore this :)
+        while True:
+            if len(self.calls) > 2:
+                pass
+            else:
+                return
 
 class WS:
     def __init__(self, data):
@@ -69,15 +61,10 @@ class WS:
     @property
     def is_closed(self) -> bool:
         return self.ws.closed
-
-    @property
-    def is_ratelimited(self) -> bool:
-        return self.ratelimiter.is_ratelimited()
     
     @property
     def is_ready(self):
         return self._ready.is_set()
-
 
     async def dispatch(self, *args, **kwargs):
         _dispatch = self.data.get("dispatch")
@@ -89,7 +76,10 @@ class WS:
 
     def receive(self, event):
         future = self.loop.create_future()
-        listener = EventListener(event, future)
+        listener = {
+            "event": event,
+            "future": future
+        }
         self._event_listeners.append(listener)
         return future
 
@@ -119,9 +109,13 @@ class WS:
     async def handle(self):
         self.ws = await self.get_ws()
         self.seq = None
-        self.loop.create_task(coro = self.ratelimiter.reset(), name = "RateLimitReseter")
         await self.listen()
     
+    async def reset_calls(self):
+        while True:
+            print("e")
+            time.sleep(0.51)
+            self.ratelimiter.calls[1:]
 
     async def wait_until_ready(self) -> None:
         await self._ready.wait()
@@ -138,19 +132,16 @@ class WS:
                     "$device": "discode",
                 },
                 "encoding": "json",
-                "v": 9,
-            },
+                "v": 9
+            }
         }
 
         await self.send_json(data)
 
     async def _send(self, data):
-        while True:
-            if not self.is_ratelimited:
-                break
-            pass
+        self.ratelimiter.block()
         await self.ws.send(data)
-        await self.ratelimiter.new_call()
+        self.ratelimiter.new_call()
 
     async def send(self, data):
         self.loop.create_task(self._send(str(data)))

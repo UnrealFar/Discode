@@ -104,8 +104,7 @@ class Intents:
 
     @property
     def messages(self):
-        self.guild_messages # Used to add to self.value
-        self.direct_messages # Used to add to self.value
+        self.value += ((1 << 9) + (1 << 12))
         return self
 
     @property

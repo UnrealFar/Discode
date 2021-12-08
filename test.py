@@ -2,7 +2,6 @@ import asyncio
 import discode
 import os
 from discode import Embed, Colour
-
 TOKEN = os.environ["BOT_TOKEN"]
 
 client = discode.Bot(

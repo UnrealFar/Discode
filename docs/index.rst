@@ -13,6 +13,10 @@ Features
 - Ratelimit handling
 - Based on Object Oriented Python
 
+Manuals
+--------
+- :doc:`api`
+
 Links
 --------
 - :github:`Github <>`

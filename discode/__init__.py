@@ -1,9 +1,4 @@
-r"""Discode
----------
-Discode is a modern asynchronous Python API wrapper for the Discord REST API and the Discord Gateway API. We try our best to prevent 429s by ratelimit handlers and cacheing data when we can. Discode is currently in alpha development stage.
-
-LICENSE
----------
+r"""
 MIT License
 
 Copyright (c) 2021-Present TheFarGG

@@ -6,3 +6,4 @@ docs/_build
 *poetry.lock
 *pyproject.toml
 *.pyc
+*.sh
