@@ -1,16 +1,20 @@
 import asyncio
-from typing import Union
+from typing import Union, List
 
 from .user import User
 from .channel import TextChannel, Channel
+from .embeds import Embed
 from .member import Member
 from .guild import Guild
+from .components import Button
 
 __all__ = ("Message",)
 
 
 class Message:
-    r"""Represents a Discord message."""
+    r"""
+    Represents a Discord message.
+    """
 
     def __init__(self, **data):
         self.data = data
@@ -18,22 +22,21 @@ class Message:
         self.loop = self.http.loop
         self.created_at = data.get("timestamp")
         self.mentions = data.get("mentions")
-        self._content = data.get("content")
+        self.id = int(data.get("id"))
+        self.content = data.get("content")
         self.__author: dict = data.get("author")
         self.__member: dict = data.get("member")
         self.edited_at = data.get("edited_timestamp")
 
     @property
-    def id(self) -> int:
-        return int(self.data.get("id"))
+    def author(self) -> Union[User, Member]:
+        r"""The person who created the message. Returns a :class:`Member` if the message was sent in a guild. If it wasn't, for example a DM, it returns a :class:`User` object.
 
-    @property
-    def content(self) -> str:
-        return self._content
-
-    @property
-    def author(self) -> User:
-        """Returns a member object if in a guild, else a user object."""
+        Returns
+        --------
+        Union[:class:`User`, :class:`Member`]
+            The user or member who created the object.
+        """
         data = self.__author
         data["http"] = self.http
         if self.guild:
@@ -45,7 +48,12 @@ class Message:
 
     @property
     def guild(self) -> Guild:
-        """Returns the :class:`Guild` to which the message belongs to.
+        """Returns the guild to which the message belongs to. If the guild doesn't exist, it returns :class:`None`
+
+        Returns
+        --------
+        :class:`Guild`
+            The Discord server to which the message belongs.
         """
         return self.http.client.get_guild(self.guild_id)
 
@@ -65,10 +73,24 @@ class Message:
     def channel(self):
         return self.http.client.get_channel(self.channel_id, self.guild_id)
 
-    def set_content(content: str):
-        self._content = content
+    @property
+    def components(self) -> List[Button]:
+        _c = self.data.get("components")
+        ret = []
+        for comp in _c:
+            if comp.get("type") == 2:
+                ret.append(Button.from_json(comp))
+        
+        return ret
 
     @property
-    def components(self):
-        return self.data.get("components")
+    def embeds(self) -> List[Embed]:
+        ret = []
+        _e = self.data.get("embeds", [])
+        if self.data.get("embed"):
+            _e.append(self.data["embed"])
 
+        for emb in _e:
+            ret.append(Embed.from_json(_e))
+
+        return ret

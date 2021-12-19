@@ -7,8 +7,8 @@ class ButtonStyle(IntEnum):
     success = 3
     danger = 4
     url = 5
-    blurple = primary
-    grey = secondary
-    green = success
-    red = danger
-    link = url
+    blurple = 1
+    grey = 2
+    green = 3
+    red = 4
+    link = 5

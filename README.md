@@ -1,5 +1,5 @@
-# Discode
-A Discord API wrapper that is currently under development and is not ready for full release and general use.
+# DisCode
+DisCode is an asynchronous Python API wrapper for the Discord REST and Gateway API. This project was inspired by [Discord.py](https://github.com/rapptz/discord.py) 
 
 ### Basic Example Usage
 ```py

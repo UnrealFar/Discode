@@ -65,14 +65,21 @@ class HTTP:
             data["content"] = str(kwargs.pop("content"))
 
         if kwargs.get("embed", None):
-            data["embeds"] = [kwargs.pop("embed").data]
+            data["embeds"] = [kwargs.pop("embed").get_payload()]
 
         if kwargs.get("embeds", None):
             if "embeds" not in data:
                 data["embeds"] = []
             embeds = kwargs.pop("embeds")
             for embed in embeds:
-                data["embeds"].append(embed.data)
+                data["embeds"].append(embed.get_payload())
+
+        if kwargs.get("components", None):
+            data["components"] = []
+            for component in kwargs["components"]:
+                if not getattr(component, "url", None):
+                    self.client.active_interactions.append(component)
+                data["components"].append(component.get_payload())
 
         msgdata = await self.request("POST", f"/channels/{channel_id}/messages", json=data)
         msgdata["http"] = self

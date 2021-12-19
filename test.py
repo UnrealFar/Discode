@@ -1,6 +1,7 @@
 import asyncio
 import discode
 import os
+import traceback
 from discode import Embed, Colour
 TOKEN = os.environ["BOT_TOKEN"]
 
@@ -23,12 +24,12 @@ async def ready():
 @client.on_event("message")
 async def on_message(message: discode.Message):
     print(message.author, "has sent:\n", message.content)
-    print(f"\nComponents: {message.components}") if message.components != [] else None
+    print(f"\nComponents: {message.components}")
     channel: discode.TextChannel = message.channel
     msg = message.content
     print(message.author.id)
     if msg.startswith("d!"):
-        if msg.startswith("ping", len(client.prefix)):
+        if msg.startswith("ping", len("d!")):
             latency = get_latency()
             embed: Embed = Embed(title = "Pong!", colour = Colour.red()).add_field(
                 name = "My websocket ping",
@@ -36,11 +37,11 @@ async def on_message(message: discode.Message):
             ).set_footer(f"Requested by {message.author}")
             await channel.send(embed = embed)
 
-        elif msg.startswith("eval", len(client.prefix)):
+        elif msg.startswith("eval", len("d!")):
             if message.author.id not in [859996173943177226, 739443421202087966, 551257232143024139]:
-                return await channel.send("Only owners can do dis...")
+                return await channel.send("Only owners can do this sus")
             try:
-                data = msg[len(client.prefix):][4:]
+                data = msg[6:]
                 args = {
                     "discode": discode,
                     "message": message,
@@ -51,8 +52,13 @@ async def on_message(message: discode.Message):
                 exec(f"async def func():{data}", args)
                 resp = await eval("func()", args)
                 await channel.send(resp)
-            except Exception as error:
-                await channel.send(f"Error while excecuting code!\n{str(error)}")
+            except:
+                error = traceback.format_exc()
+                errorEm = Embed(
+                    title = "Error while excecuting code!",
+                    description = f"```{error}```"
+                )
+                await channel.send(embed = errorEm)
 
 @client.on_event("message edit")
 async def message_edit(before: discode.Message, after: discode.Message):

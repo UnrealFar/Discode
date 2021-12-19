@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Union
 
-from .channel import TextChannel
+from .channel import TextChannel, Channel
 from .member import Member
 
 class Guild:
@@ -8,6 +8,8 @@ class Guild:
         self.http = data.get("http")
         self.loop = self.http.loop
         self.data = data
+        self.id = int(data.get("id"))
+        self.name = data.get("name")
         self.icon = data.get("icon")
         self.splash = data.get("splash")
         self.discovery_splash: data.get("discovery_splash")
@@ -24,14 +26,6 @@ class Guild:
         self.vanity_url_code = data.get("vanity_url_code")
         self.banner = data.get("banner")
         self.premium_tier = data.get("premium_tier")
-    
-    @property
-    def name(self) -> str:
-        return self.data.get("name")
-
-    @property
-    def id(self) -> int:
-        return int(self.data.get("id"))
 
     @property
     def mfa_level(self) -> int:
@@ -62,14 +56,17 @@ class Guild:
             return self._members
 
     @property
-    def channels(self) -> List[TextChannel]:
-        if getattr(self, "_channels", None):
+    def channels(self) -> List[Union[TextChannel, Channel]]:
+        if hasattr(self, "_channels"):
             return self._channels
 
         self._channels = []
         for ch in self.data.get("channels"):
             ch["http"] = self.http
-            if ch.get("type") == 0:
+            _type = ch.get("type")
+            if _type == 0:
                 self._channels.append(TextChannel(**ch))
+            else:
+                self._channels.append(Channel(**ch))
 
         return self._channels

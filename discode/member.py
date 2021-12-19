@@ -6,13 +6,10 @@ class Member:
     def __init__(self, **data):
         self.data = data
         self.http = data.get("http")
+        self.id = int(self.user.id)
 
     def __str__(self) -> str:
         return f"{self.name}#{self.discriminator}"
-
-    @property
-    def id(self) -> int:
-        return int(self.user.id)
 
     @property
     def name(self) -> str:
@@ -32,9 +29,9 @@ class Member:
 
     @property
     def display_name(self) -> str:
-        if not self.nick or self.nick == "":
+        if not self.nick:
             return self.name
-        return self.name
+        return self.nick
 
     @property
     def roles(self):

@@ -8,7 +8,8 @@ readme = open("README.md").read()
 requirements = open("requirements.txt").read().splitlines()
 
 packages = [
-    "discode"
+    "discode",
+    "discode.components"
 ]
 
 classifiers = [

@@ -3,11 +3,13 @@ import asyncio
 import json
 import sys
 import time
+import zlib
 
-from .message import Message
 from .intents import Intents
 from .guild import Guild
 from .member import Member
+from . import utils
+from .errors import GatewayError, PrivilegedIntentsRequired
 
 class OP:
     DISPATCH = 0
@@ -24,21 +26,6 @@ class OP:
     HEARTBEAT_ACK = 11
     GUILD_SYNC = 12
 
-class RateLimiter:
-    def __init__(self, **kwargs):
-        self.calls = []
-
-    def new_call(self):
-        self.calls.append("")
-
-    def block(self):
-        return # uuh lets ignore this :)
-        while True:
-            if len(self.calls) > 2:
-                pass
-            else:
-                return
-
 class WS:
     def __init__(self, data):
         self.data = data
@@ -49,11 +36,13 @@ class WS:
         self.intents: Intents = data.get("intents") or Intents.default()
         self.message_cache = self.http.client.message_cache
         self.guilds = self.http.client.guilds
-        self.ratelimiter = RateLimiter(ws = self, http = self.http)
         self._ready = asyncio.Event(loop=self.loop)
         self._last_send = 0
         self._last_ack = 0
         self._event_listeners = []
+        self.inflator = zlib.decompressobj()
+        self.buffer = bytearray()
+        self.ZLIB_SUFFIX = b'\x00\x00\xff\xff'
 
     def get_latency(self):
         return self._last_ack - self._last_send
@@ -72,9 +61,9 @@ class WS:
 
     async def _get_gateway(self):
         _data = await self.http.request("GET", "/gateway")
-        return _data.get("url") or "wss://gateway.discord.gg/"
+        return _data.get("url") or "wss://gateway.discord.gg/?v=9&encoding=json&compress=zlib-stream"
 
-    def receive(self, event):
+    def wait_for(self, event):
         future = self.loop.create_future()
         listener = {
             "event": event,
@@ -110,12 +99,6 @@ class WS:
         self.ws = await self.get_ws()
         self.seq = None
         await self.listen()
-    
-    async def reset_calls(self):
-        while True:
-            print("e")
-            time.sleep(0.51)
-            self.ratelimiter.calls[1:]
 
     async def wait_until_ready(self) -> None:
         await self._ready.wait()
@@ -130,18 +113,14 @@ class WS:
                     "$os": sys.platform,
                     "$browser": "discode",
                     "$device": "discode",
-                },
-                "encoding": "json",
-                "v": 9
+                }
             }
         }
 
         await self.send_json(data)
 
     async def _send(self, data):
-        self.ratelimiter.block()
         await self.ws.send(data)
-        self.ratelimiter.new_call()
 
     async def send(self, data):
         self.loop.create_task(self._send(str(data)))
@@ -150,75 +129,88 @@ class WS:
         data = json.dumps(data)
         await self.send(data)
 
-    async def listen(self):
-        async for data in self.ws:
+    async def receive(self):
+        data = await self.ws.recv()
+        if not data:
+            return
+
+        if isinstance(data, bytes):
+            self.buffer.extend(data)
+
+            if len(data) < 4 or data[-4:] != self.ZLIB_SUFFIX:
+                self.buffer = bytearray()
+                return
+
+            data = self.inflator.decompress(self.buffer)
+            data = data.decode("utf-8")
+            self.buffer = bytearray()
+
+        if isinstance(data, int):
+            if data == 4014:
+                raise PrivilegedIntentsRequired()
+
+            else:
+                fmt = (
+                    "Disconnected with code {code} from the gateway!"
+                ).format(code = data)
+                raise GatewayError(fmt)
+
+        try:
             data = json.loads(data)
-            seq = data.get("s")
-            event = data.get('t')
-            op = data.get('op')
+        except json.decoder.JSONDecodeError:
+            return
+        return data
 
-            if seq is not None:
-                self.seq = seq
+    async def listen(self):
+        while not self.is_closed:
+            data = await self.receive()
+            if data:
+                seq = data.get("s")
+                event = data.get('t')
+                op = data.get('op')
 
-            if op == OP.HELLO:
-                interval = data["d"]["heartbeat_interval"] / 1000.0
-                self.loop.create_task(self.heartbeat(interval))
-                await self.identify()
+                if seq is not None:
+                    self.seq = seq
 
-            elif op == OP.INVALID_SESSION:
-               raise Exception("Invalid Token")
+                if op == OP.HELLO:
+                    interval = data["d"]["heartbeat_interval"] / 1000.0
+                    self.loop.create_task(self.heartbeat(interval))
+                    await self.identify()
 
-            elif op == OP.HEARTBEAT:
-                await self.send_json(self.hb_payload)
+                elif op == OP.INVALID_SESSION:
+                    raise Exception("Invalid Token")
 
-            elif op == OP.HEARTBEAT_ACK:
-                self._last_ack = time.perf_counter()
+                elif op == OP.HEARTBEAT:
+                    await self.send_json(self.hb_payload)
 
-            elif op == OP.DISPATCH:
-                if event == "READY":
-                    self.session_id = data["d"].get("session_id")
-                    self._ready.set()
-                    await self.dispatch("ready")
+                elif op == OP.HEARTBEAT_ACK:
+                    self._last_ack = time.perf_counter()
 
-                elif event == "MESSAGE_CREATE":
-                    msgdata = data["d"]
-                    msgdata["http"] = self.http
-                    message = Message(**msgdata)
-                    self.message_cache[message.id] = message
-                    if len(self.message_cache) == self.http.client.message_limit:
-                        temp = list(self.message_cache)[0]
-                        self.message_cache.pop(temp)
-                    await self.dispatch("message", message)
+                elif op == OP.DISPATCH:
+                    await utils._check(self, data)
+                    if event == "READY":
+                        self.session_id = data["d"].get("session_id")
+                        self._ready.set()
+                        await self.dispatch("ready")
 
-                elif event == "MESSAGE_UPDATE":
-                    msg = self.message_cache.get(int(data["d"]["id"]), None)
-                    if msg is not None:
-                        beforedata = msg.data
-                        before = Message(**beforedata)
-                        msg.data["content"] = data["d"].get("content")
-                        msg.data["edited_at"] = data["d"].get("edited_timestamp")
-                        after = msg
-                        await self.dispatch("message edit", before, after)
+                    if event == "GUILD_CREATE":
+                        gdata = data.get("d")
+                        if self.http.client.chunk_guilds_at_startup:
+                            await self.chunk_guild(int(gdata.get("id")))
 
-                elif event == "GUILD_CREATE":
-                    gdata = data.get("d")
-                    if self.http.client.chunk_guilds_at_startup:
-                        await self.chunk_guild(int(gdata.get("id")))
+                            gdata["http"] = self.http
+                            guild = Guild(**gdata)
+                            self.guilds.append(guild)
 
-                    gdata["http"] = self.http
-                    del gdata["members"]
-                    guild = Guild(**gdata)
-                    self.guilds[int(gdata.get("id"))] = guild
-
-                elif event == "GUILD_MEMBERS_CHUNK":
-                    guild = self.guilds[int(data.get("d").get("guild_id"))]
-                    for member in data.get("d").get("members"):
-                        member["http"] = self.http
-                        mem = Member(**member)
-                        try:
-                            guild._members.append(mem)
-                        except:
-                            guild._members = [mem]
+                    elif event == "GUILD_MEMBERS_CHUNK":
+                        guild = self.http.client.get_guild(int(data["d"].get("guild_id")))
+                        for member in data.get("d").get("members"):
+                            member["http"] = self.http
+                            mem = Member(**member)
+                            try:
+                                guild._members.append(mem)
+                            except:
+                                guild._members = [mem]
 
     @property
     def hb_payload(self):
