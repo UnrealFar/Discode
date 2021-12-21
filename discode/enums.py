@@ -1,6 +1,5 @@
-from enum import IntEnum
 
-class ButtonStyle(IntEnum):
+class ButtonStyle:
     r"""Represents the style of a :class:`Button`."""
     primary = 1
     secondary = 2

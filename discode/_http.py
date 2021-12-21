@@ -7,6 +7,7 @@ from .intents import Intents
 from .message import Message
 from .channel import TextChannel
 from .guild import Guild
+from .components import ActionRow
 from . import gw
 from .errors import (
     Unauthorized,
@@ -26,7 +27,11 @@ class HTTP:
         self.user_agent = "DiscordBot made with Discode"
 
     async def request(self, method: str, endpoint: str, **kwargs):
-        headers = {"Authorization": "Bot " + self.token}
+        if not kwargs.get("headers"):
+            headers = {"Authorization": "Bot " + self.token}
+        else:
+            headers = kwargs.pop("headers", {})
+            headers["Authorization"] = "Bot " + self.token
 
         async with self.session.request(
             method = method,
@@ -35,24 +40,25 @@ class HTTP:
             **kwargs
         ) as resp:
 
-            if resp.status in (200):
-                return await resp.json()
+            if resp.status in (200, 204):
+                if resp.status == 200:
+                    return await resp.json()
 
-            elif resp.status >= 400 < 500:
+            elif resp.status >= 400 > 500:
                 if resp.status == 400:
-                    raise BadRequest(resp.text)
+                    raise BadRequest(await resp.text())
 
                 elif resp.status == 401:
-                    raise Unauthorized(resp.text)
+                    raise Unauthorized(await resp.text())
 
                 elif resp.status == 403:
-                    raise Forbidden(resp.text)
+                    raise Forbidden(await resp.text())
 
             elif resp.status >= 500:
-                raise DiscordError(resp.text)
+                raise DiscordError(await resp.text())
 
             else:
-                err = f"Something unknown happened while trying to make a {method.lower()} request to {self.ap_url + endpoint}"
+                err = f"Something unknown happened while trying to make a {method.lower()} request to {self.api_url + endpoint}.\nResponse status code: {resp.status}"
                 raise DiscodeError(err)
 
     async def connect(self):
@@ -102,12 +108,26 @@ class HTTP:
                 data["embeds"].append(embed.get_payload())
 
         if kwargs.get("components", None):
-            data["components"] = []
+            rows = []
             for component in kwargs["components"]:
-                if not getattr(component, "url", None):
-                    self.client.active_interactions.append(component)
-                data["components"].append(component.get_payload())
+                if not isinstance(component, ActionRow):
+                    if not getattr(component, "url", None):
+                        self.client.active_interactions.append(component)
+                    if component.row:
+                        component.row.items.append(component)
+                    else:
+                        if len(rows) == 0:
+                            rows.append(ActionRow())
+                        for row in rows:
+                            if len(row.items) >= 5:
+                                row = ActionRow()
+                                rows.append(row)
+                            row.items.append(component)
+                            break
 
+            data["components"] = [row.get_payload() for row in rows]
+
+        print(data)
         msgdata = await self.request("POST", f"/channels/{channel_id}/messages", json=data)
         msgdata["http"] = self
         return Message(**msgdata)

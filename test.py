@@ -1,11 +1,10 @@
 import asyncio
-import discode
 import os
 import traceback
-from discode import commands
+import discode
 TOKEN = os.environ["BOT_TOKEN"]
 
-client = commands.Bot(
+client = discode.commands.Bot(
     prefix = "d!",
     intents = discode.Intents.default()
 )
@@ -41,6 +40,21 @@ async def on_message(message: discode.Message):
                 f"Requested by {message.author}"
             )
             await channel.send(embed = embed)
+
+        elif msg.startswith("comp", len("d!")):
+            comps = []
+            button1 = discode.Button(discode.ButtonStyle.primary, label = "Hi")
+            comps.append(button1)
+            msg = await channel.send(
+                "Component test.",
+                components = comps
+            )
+            await asyncio.sleep(10)
+            await msg.delete(reason = "Component test")
+
+        elif msg.startswith("url", len("d!")):
+            comps = [discode.Button(style = discode.ButtonStyle.url, url = "https://youtube.com/")]
+            await channel.send("Go to YouTube", components = comps)
 
         elif msg.startswith("eval", len("d!")):
             if message.author.id not in [859996173943177226, 739443421202087966, 551257232143024139]:

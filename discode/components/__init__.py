@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Any, List
 import os
 
 from discode.enums import ButtonStyle
@@ -32,17 +32,19 @@ class Button(Component):
     custom_id: Optional[str] = None
         The custom id of the button. Specify this if you want to make the button persistent.
 
-    row: Optional[int]
-        The action row to which the button belongs.
+    row: ActionRow
+        The :class:`ActionRow` to which the button belongs.
     """
     def __init__(
         self,
         style: Union[ButtonStyle, int] = ButtonStyle.primary,
         label: Optional[str] = None,
         disabled: bool = False,
-        custom_id: Optional[str] = None,
+        custom_id: Any = None,
         url: Optional[str] = None,
-        row: Optional[int] = None
+        row: "ActionRow" = None,
+        *args,
+        **kwargs
     ):
         super().__init__()
         self.style = style
@@ -57,25 +59,22 @@ class Button(Component):
             self.style = ButtonStyle.url
             self.url = url
 
-        else:
-            if not self.style == ButtonStyle.url:
-                if label is None or label == "":
-                    raise TypeError("Label cannot be empty in a non-url button!")
-
         if not url:
             if custom_id:
                 self.custom_id = custom_id
             else:
                 self.custom_id = os.urandom(16).hex()
 
-        self.disabled = disabled
+        self.label = label
+        self.disabled: bool = disabled
+        self.row: "ActionRow" = row
 
     def get_payload(self):
         data = {
             "type": 2,
             "style": self.style
         }
-        if self.url:
+        if hasattr(self, "url"):
             data["url"] = self.url
             return data
 
@@ -90,3 +89,41 @@ class Button(Component):
     def from_json(cls: ..., data: dict) -> ...:
         data.pop("type", None)
         return cls(**data)
+
+class ActionRow(Component):
+    def __init__(
+        self,
+        custom_id: Any = None,
+        *args
+    ):
+
+        self.items: List[Union[Component, Button]] = []
+
+        if not custom_id:
+            custom_id = os.urandom(16).hex()
+
+        self.custom_id: Any = custom_id
+
+    @classmethod
+    def from_json(cls: "ActionRow", data: dict) -> "ActionRow":
+        ar = cls()
+        for comp in data.get("components"):
+            if isinstance(comp, dict):
+                if comp.get("type") == 2:
+                    comp = Button.from_json(comp)
+
+            ar.items.append(comp)
+
+        return ar
+
+    def get_payload(self) -> dict:
+        data = {}
+
+        data["custom_id"] = self.custom_id
+        data["components"] = []
+        data["type"] = 1
+
+        for item in self.items:
+            data["components"].append(item.get_payload())
+
+        return data

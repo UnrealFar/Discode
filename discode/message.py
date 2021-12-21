@@ -6,7 +6,7 @@ from .channel import TextChannel, Channel
 from .embeds import Embed
 from .member import Member
 from .guild import Guild
-from .components import Button
+from .components import Button, ActionRow
 
 __all__ = ("Message",)
 
@@ -78,7 +78,9 @@ class Message:
         _c = self.data.get("components")
         ret = []
         for comp in _c:
-            if comp.get("type") == 2:
+            if comp.get("type") == 1:
+                ret.append(ActionRow.from_json(comp))
+            elif comp.get("type") == 2:
                 ret.append(Button.from_json(comp))
         
         return ret
@@ -94,3 +96,15 @@ class Message:
             ret.append(Embed.from_json(_e))
 
         return ret
+
+    async def delete(self, reason: str = None) -> "Message":
+        kwargs = {
+            "method": "DELETE",
+            "endpoint": f"/channels/{self.channel_id}/messages/{self.id}",
+            "headers": {}
+        }
+        if reason:
+            kwargs["headers"]["X-Audit-Log-Reason"] = reason
+
+        await self.http.request(**kwargs)
+        return self

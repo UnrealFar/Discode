@@ -40,8 +40,8 @@ from .member import *
 from .colours import *
 from .enums import *
 from .components import *
+from . import commands
 
-__name__ = "Discode"
 __author__ = "TheFarGG"
 __copyright__ = "Copyright (c) 2021-present TheFarGG"
 __version__ = "1.0.0"
