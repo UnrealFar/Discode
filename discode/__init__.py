@@ -33,7 +33,6 @@ from .user import *
 from .message import *
 from .intents import *
 from .channel import *
-from .bot import *
 from .guild import *
 from .errors import *
 from .embeds import *

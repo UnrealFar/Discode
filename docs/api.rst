@@ -26,15 +26,6 @@ Client
 .. autoclass:: Client
     :members:
 
-Bots
----------------
-These are the Bot objects, that the library provides.
-
-Bot
-~~~~~
-
-.. autoclass:: Bot
-    :members:
 
 Event Reference
 -----------------

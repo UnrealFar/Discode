@@ -2,10 +2,10 @@ import asyncio
 import discode
 import os
 import traceback
-from discode import Embed, Colour
+from discode import commands
 TOKEN = os.environ["BOT_TOKEN"]
 
-client = discode.Bot(
+client = commands.Bot(
     prefix = "d!",
     intents = discode.Intents.default()
 )
@@ -31,10 +31,15 @@ async def on_message(message: discode.Message):
     if msg.startswith("d!"):
         if msg.startswith("ping", len("d!")):
             latency = get_latency()
-            embed: Embed = Embed(title = "Pong!", colour = Colour.red()).add_field(
+            embed: discode.Embed = discode.Embed(
+                title = "Pong!",
+                colour = discode.Colour.red()
+            ).add_field(
                 name = "My websocket ping",
                 value = f"{latency}ms"
-            ).set_footer(f"Requested by {message.author}")
+            ).set_footer(
+                f"Requested by {message.author}"
+            )
             await channel.send(embed = embed)
 
         elif msg.startswith("eval", len("d!")):
@@ -46,15 +51,14 @@ async def on_message(message: discode.Message):
                     "discode": discode,
                     "message": message,
                     "bot": client,
-                    "client": client,
-                    "import": __import__
+                    "client": client
                 }
                 exec(f"async def func():{data}", args)
                 resp = await eval("func()", args)
                 await channel.send(resp)
             except:
                 error = traceback.format_exc()
-                errorEm = Embed(
+                errorEm = discode.Embed(
                     title = "Error while excecuting code!",
                     description = f"```{error}```"
                 )

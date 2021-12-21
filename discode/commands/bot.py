@@ -1,6 +1,6 @@
 from typing import Union, Callable, List
 
-from .client import Client
+from discode import Client
 
 __all__ = ("Bot",)
 

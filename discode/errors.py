@@ -12,12 +12,6 @@ class InvalidToken(DiscodeError):
     def __init__(self, *args):
         super().__init__(*args)
 
-class DuplicateKeyError(DiscodeError):
-    r"""Raised when the user provides a key that already exists and can't be replaced.
-    """
-    def __init__(self, *args):
-        super().__init__(*args)
-
 # HTTP errors
 
 class HTTPError(DiscodeError):
@@ -40,6 +34,12 @@ class Forbidden(HTTPError):
 
 class BadRequest(HTTPError):
     r"""Raised when the API sends a 404 response status to an http request made by a client. This occurs when the client tries to access to access content that doesn't exist.
+    """
+    def __init__(self, *args):
+        super().__init__(*args)
+
+class DiscordError(HTTPError):
+    r"""Raised when the API sends a 500 status code. This occurs when there is an error in the Discord servers.
     """
     def __init__(self, *args):
         super().__init__(*args)

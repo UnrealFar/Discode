@@ -35,6 +35,10 @@ extlinks = {
     "github": ("https://github.com/TheFarGG/Discode/", "Link to Github Repository")
 }
 
+intersphinx_mapping = {
+    "py": ("https://docs.python.org/3", None)
+}
+
 templates_path = ['_templates']
 default_role = "object"
 language = None
@@ -45,5 +49,5 @@ exclude_patterns = []
 htmlhelp_basename = "discode.doc"
 html_context = {"dsc": "https://discord.gg/5JXT6npG4X"}
 html_show_sphinx = False
-html_theme = "groundwork"
+html_theme = "furo"
 html_static_path = ['_static']

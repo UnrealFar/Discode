@@ -9,7 +9,6 @@ from .guild import Guild
 from .channel import Channel, TextChannel
 from .member import Member
 from .intents import Intents
-from .errors import DuplicateKeyError
 
 __all__ = ("Client",)
 
@@ -22,29 +21,42 @@ class Client:
     message_limit: :class:`int`
         The maximum amount of messages to have in the cache. Messages are cached to reduce api callsand prevent ratelimits.
 
-    chunk_at_startup: :class:`bool`
+    chunk_guilds_at_startup: :class:`bool`
         If the client should chunk up all the guild members before the ready event. Defaults to :class:`True`.
+
+    intents: :class:`Intents` = :meth:`Intents.default()`
+        The intents to use while connecting to the Discord gateway.
 
     Attributes
     -----------
     loop: :class:`asyncio.AbstractEventLoop`
         The :class:`asyncio.AbstractEventLoop` to be used for asynchronous functions.
 
+    intents: :class:`Intents`
+        The intents that were provide while connecting to the Discord gateway.
+
     guilds: List[:class:`Guild`]
         The guild cache of the client
 
-    active_interactions: List[Any]
+    active_interactions: List[:class:`Any`]
         Contains all the component interactions that the client is listening for.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        message_limit: int = None,
+        chunk_guilds_at_startup: bool = True,
+        intents: Optional[Intents] = None,
+        *args,
+        **kwargs
+    ):
         self.loop: asyncio.AbstractEventLoop = kwargs.get("loop", asyncio.get_event_loop())
         self.__events: dict = {}
         self.message_cache = []
         self.guilds: List[Guild] = []
-        self.chunk_guilds_at_startup: bool = True
-        self.message_limit: Optional[int] = kwargs.get("message_limit")
-        self.intents = kwargs.get("intents", Intents.default())
+        self.chunk_guilds_at_startup: bool = chunk_guilds_at_startup
+        self.message_limit: Optional[int] = message_limit
+        self.intents = intents if intents else Intents.default()
         self.active_interactions = []
 
     @property
@@ -106,8 +118,8 @@ class Client:
             file = sys.stderr
         )
 
-    def on_event(self, event_name: str, name = None) -> ...:
-        r"""The decorator that registers a new listener
+    def on_event(self, event_name: str) -> ...:
+        r"""The decorator that registers a new listener.
         """
         def decorator(func: Callable):
             if not asyncio.iscoroutinefunction(func):
@@ -116,22 +128,20 @@ class Client:
             self.add_listener(
                 **{
                     "event_name": event_name,
-                    "callback": func,
-                    "name": name
+                    "callback": func
                 }
             )
 
         return decorator
 
-    def add_listener(self, event_name: str, name: str, callback: Callable):
-        r"""This used by the on_event() decorator to register a new listener, this can also be used to add listeners manually.
+    def add_listener(self, event_name: str, callback: Callable):
+        r"""This used by the :meth:`Client.on_event()` decorator to register a new listener, this can also be used to add listeners manually.
         The callback must be a coroutine.
         """
 
         if not asyncio.iscoroutinefunction(callback):
             raise TypeError("Listener must be a coroutine.")
-        if name is None:
-            name = callback.__name__
+
         if event_name not in self.__events:
             self.__events[event_name] = []
         self.__events[event_name].append(callback)
@@ -161,7 +171,7 @@ class Client:
             pass
 
     def get_channel(self, channel_id: int, guild_id: int) -> Union[Channel, TextChannel]:
-        r"""Get a :class:`Channel` from the client's cache. Returns :class:`None` if the channel doesnt't exist or if the cache hasn't been updated yet. In this case, fetch_channel() can be used.
+        r"""Get a :class:`Channel` from the client's cache. Returns :class:`None` if the channel doesnt't exist or if the cache hasn't been updated yet. In this case, :meth:`Client.fetch_channel()` can be used.
 
         Returns
         -------
@@ -185,10 +195,7 @@ class Client:
             The member object that you searched for.
         """
         guild = self.get_guild(guild_id)
-        for member in guild.members:
-            if member.id == member_id:
-                return member
-        return None
+        return guild.get_member(member_id)
 
     def get_guild(self, guild_id: int) -> Guild:
         r"""Returns a :class:`Guild` object if the guild exists, else :class:`None` . There is almost no way, that this misses an existing guild.
@@ -197,3 +204,8 @@ class Client:
             if guild.id == guild_id:
                 return guild
 
+    async def fetch_channel(self, channel_id: int) -> Union[Channel, TextChannel]:
+        r"""Returns a channel with a provided id.
+        This is an API request. Use :meth:`Client.get_channel` to get a channel from the cache.
+        """
+        return await self.http.fetch_channel(channel_id)

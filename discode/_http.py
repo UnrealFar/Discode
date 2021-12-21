@@ -6,10 +6,15 @@ from .user import ClientUser
 from .intents import Intents
 from .message import Message
 from .channel import TextChannel
+from .guild import Guild
 from . import gw
-
-__all__ = ("HTTP",)
-
+from .errors import (
+    Unauthorized,
+    Forbidden,
+    BadRequest,
+    DiscodeError,
+    DiscordError
+)
 
 class HTTP:
     def __init__(self, loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_event_loop(), **kwargs):
@@ -23,10 +28,32 @@ class HTTP:
     async def request(self, method: str, endpoint: str, **kwargs):
         headers = {"Authorization": "Bot " + self.token}
 
-        async with self.session.request(method=method, url=self.api_url + endpoint, headers=headers, **kwargs) as resp:
-            response = await resp.json()
+        async with self.session.request(
+            method = method,
+            url = self.api_url + endpoint,
+            headers = headers,
+            **kwargs
+        ) as resp:
 
-            return response
+            if resp.status in (200):
+                return await resp.json()
+
+            elif resp.status >= 400 < 500:
+                if resp.status == 400:
+                    raise BadRequest(resp.text)
+
+                elif resp.status == 401:
+                    raise Unauthorized(resp.text)
+
+                elif resp.status == 403:
+                    raise Forbidden(resp.text)
+
+            elif resp.status >= 500:
+                raise DiscordError(resp.text)
+
+            else:
+                err = f"Something unknown happened while trying to make a {method.lower()} request to {self.ap_url + endpoint}"
+                raise DiscodeError(err)
 
     async def connect(self):
         if self.session.closed:
@@ -89,3 +116,7 @@ class HTTP:
         data = await self.request("GET", f"/channels/{channel_id}")
         data["http"] = self
         return TextChannel(**data)
+
+    async def fetch_guild(self, guild_id: int) -> Guild:
+        data = await self.request("GET", f"/guilds/{guild_id}")
+        data['http'] = self

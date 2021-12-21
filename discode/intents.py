@@ -27,25 +27,10 @@ class Intents:
         return cls(**kwargs)
 
     @classmethod
-    def all(cls):
-        kwargs = {
-            "guilds": True,
-            "members": True,
-            "typing": True,
-            "bans": True,
-            "emojis": True,
-            "integrations": True,
-            "webhooks": True,
-            "voice_states": True,
-            "invites": True,
-            "presence": True,
-            "messages": True,
-            "typing": True,
-            "events": True,
-            "emojis": True,
-        }
-        return cls(**kwargs)
-
+    def all(cls: "Intents"):
+        i = cls()
+        i.value = 32767
+        return i
 
     @property
     def guilds(self):
@@ -115,8 +100,8 @@ class Intents:
 
     @property
     def typing(self):
-        self.guild_typing  # Used to add to self.value
-        self.dm_typing  # Used to add to self.value
+        self.guild_typing
+        self.dm_typing
         return self
 
     @property

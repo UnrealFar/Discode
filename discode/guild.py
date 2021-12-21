@@ -70,3 +70,13 @@ class Guild:
                 self._channels.append(Channel(**ch))
 
         return self._channels
+
+    def get_member(self, member_id):
+        for member in self.members:
+            if member.id == member_id:
+                return member
+
+    def get_channel(self, channel_id: int) -> Union[Channel, TextChannel]:
+        for channel in self.channels:
+            if channel.id == channel_id:
+                return channel
