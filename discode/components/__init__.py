@@ -95,16 +95,10 @@ class Button(Component):
 class ActionRow(Component):
     def __init__(
         self,
-        custom_id: Any = None,
         *args
     ):
 
         self.items: List[Union[Component, Button]] = []
-
-        if not custom_id:
-            custom_id = os.urandom(16).hex()
-
-        self.custom_id: Any = custom_id
 
     @classmethod
     def from_json(cls: "ActionRow", data: dict) -> "ActionRow":
@@ -121,7 +115,6 @@ class ActionRow(Component):
     def get_payload(self) -> dict:
         data = {}
 
-        data["custom_id"] = self.custom_id
         data["components"] = []
         data["type"] = 1
 
