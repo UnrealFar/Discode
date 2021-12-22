@@ -76,6 +76,8 @@ class Button(Component):
         }
         if hasattr(self, "url"):
             data["url"] = self.url
+            if self.label:
+                data["label"] = self.label
             return data
 
         data["custom_id"] = self.custom_id

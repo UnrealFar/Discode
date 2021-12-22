@@ -17,7 +17,7 @@ class InvalidToken(DiscodeError):
 class HTTPError(DiscodeError):
     r"""Base for errors raised when an error occurs during exchange of data with the REST API.
     """
-    def __init__(self, *args):
+    def __init__(self, *args, code: int = None):
         super().__init__(*args)
 
 class Unauthorized(HTTPError):

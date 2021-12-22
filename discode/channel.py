@@ -11,18 +11,11 @@ class Channel:
     def __init__(self, **data):
         self.data: dict = data
         self.http = data.get("http")
-        self.loop = self.http.loop
+        self.id = int(data.pop("id", None))
+        self.name = data.pop("name", None)
         self.topic = data.get("topic")
         self.permissions = data.get("permission_overwrites")
         self.position = data.get("position")
-
-    @property
-    def name(self) -> str:
-        return self.data.get("name", None)
-
-    @property
-    def id(self) -> int:
-        return int(self.data.get("id"))
 
     @property
     def mention(self) -> str:
@@ -30,7 +23,7 @@ class Channel:
 
     @property
     def is_nsfw(self) -> bool:
-        return self.data.get("nsfw", False) # haha nsfw go brrrr
+        return self.data.get("nsfw", False)
 
 class TextChannel(Channel):
     r"""Represents a Discord text channel.
@@ -50,6 +43,29 @@ class TextChannel(Channel):
     async def send(self, content = None, **kwargs):
         r"""Send a message to the text channel. Returns the sent :class:`Message`.
         """
+        if content:
+            kwargs["content"] = content
+
+        message = await self.http.send_message(
+            channel_id = self.id,
+            **kwargs,
+        )
+
+        return message
+
+class DMChannel(Channel):
+    __slots__ = [
+        "id",
+        "type",
+        "data"
+    ]
+
+    def __init__(self, **data):
+        self.data = data
+        self.id = int(data.pop("id", None))
+        self.type: int = 1
+
+    async def send(self, content = None, **kwargs):
         if content:
             kwargs["content"] = content
 

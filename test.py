@@ -53,7 +53,7 @@ async def on_message(message: discode.Message):
             await msg.delete(reason = "Component test")
 
         elif msg.startswith("url", len("d!")):
-            comps = [discode.Button(style = discode.ButtonStyle.url, url = "https://youtube.com/")]
+            comps = [discode.Button(style = discode.ButtonStyle.url, url = "https://youtube.com/", label = "YouTube")]
             await channel.send("Go to YouTube", components = comps)
 
         elif msg.startswith("eval", len("d!")):
@@ -80,6 +80,8 @@ async def on_message(message: discode.Message):
 
 @client.on_event("message edit")
 async def message_edit(before: discode.Message, after: discode.Message):
+    if before.author.bot:
+        return
     print(
         "Message edited by", after.author,
         "\nOld content:", before.content,

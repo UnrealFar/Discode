@@ -2,7 +2,7 @@ import asyncio
 from typing import Optional, Union
 import aiohttp
 
-from .user import ClientUser
+from .user import ClientUser, User
 from .intents import Intents
 from .message import Message
 from .channel import TextChannel
@@ -10,6 +10,7 @@ from .guild import Guild
 from .components import ActionRow
 from . import gw
 from .errors import (
+    HTTPError,
     Unauthorized,
     Forbidden,
     BadRequest,
@@ -58,8 +59,8 @@ class HTTP:
                 raise DiscordError(await resp.text())
 
             else:
-                err = f"Something unknown happened while trying to make a {method.lower()} request to {self.api_url + endpoint}.\nResponse status code: {resp.status}"
-                raise DiscodeError(err)
+                err = f"Something unknown happened while trying to make a {method.lower()} request to {self.api_url + endpoint}"
+                raise HTTPError(err, await resp.text(), code = resp.status)
 
     async def connect(self):
         if self.session.closed:
@@ -109,9 +110,14 @@ class HTTP:
 
         if kwargs.get("components", None):
             rows = []
+            data["components"] = []
             for component in kwargs["components"]:
                 if not isinstance(component, ActionRow):
-                    if not getattr(component, "url", None):
+                    if hasattr(component, "url"):
+                        if not component.url:
+                            self.client.active_interactions.append(component)
+ 
+                    else:
                         self.client.active_interactions.append(component)
                     if component.row:
                         component.row.items.append(component)
@@ -125,12 +131,21 @@ class HTTP:
                             row.items.append(component)
                             break
 
-            data["components"] = [row.get_payload() for row in rows]
+            for row in rows:
+                data["components"].append(row.get_payload())
 
         print(data)
         msgdata = await self.request("POST", f"/channels/{channel_id}/messages", json=data)
         msgdata["http"] = self
         return Message(**msgdata)
+
+    async def fetch_user(self, user_id: int) -> User:
+        data = await self.request(
+            "GET",
+            f"/users/{user_id}"
+        )
+        data["http"] = self
+        return User(**data)
 
     async def fetch_channel(self, channel_id: int) -> Union[TextChannel]:
         data = await self.request("GET", f"/channels/{channel_id}")

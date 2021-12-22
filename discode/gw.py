@@ -43,9 +43,19 @@ class WS:
         self.inflator = zlib.decompressobj()
         self.buffer = bytearray()
         self.ZLIB_SUFFIX = b'\x00\x00\xff\xff'
+        self.last_send = 0
 
     def get_latency(self):
         return self._last_ack - self._last_send
+
+    def is_ratelimited(self) -> bool:
+        if (time.perf_counter() - self.last_send) <= 0.53:
+            return True
+        return False
+
+    async def block(self):
+        while self.is_ratelimited():
+            pass
 
     @property
     def is_closed(self) -> bool:
@@ -59,9 +69,13 @@ class WS:
         _dispatch = self.data.get("dispatch")
         self.loop.create_task(_dispatch(*args, **kwargs))
 
-    async def _get_gateway(self):
-        _data = await self.http.request("GET", "/gateway")
-        return _data.get("url") or "wss://gateway.discord.gg/?v=9&encoding=json&compress=zlib-stream"
+    async def _get_gateway(self, use_zlib=True, v=9):
+        data = await self.http.request("GET", "/gateway")
+        url = data.get("url")
+        url = f"{url}?encoding=json&v={v}"
+        if use_zlib:
+            url = f"{url}&compress=zlib-stream"
+        return url
 
     def wait_for(self, event):
         future = self.loop.create_future()
@@ -113,17 +127,17 @@ class WS:
                     "$os": sys.platform,
                     "$browser": "discode",
                     "$device": "discode",
-                }
+                },
+                "compress": True
             }
         }
 
         await self.send_json(data)
 
-    async def _send(self, data):
-        await self.ws.send(data)
-
     async def send(self, data):
-        self.loop.create_task(self._send(str(data)))
+        self.last_send = time.perf_counter()
+        await self.block()
+        await self.ws.send(str(data))
 
     async def send_json(self, data):
         data = json.dumps(data)
