@@ -15,7 +15,7 @@ class User:
         "bot",
         "system",
         "email",
-        "channel",
+        "_channel",
         "__avatar",
         "__banner",
         "http"
@@ -59,6 +59,9 @@ class User:
         ba = "https://cdn.discord.com/banners/" + self.id + "/" + self.__banner + ".png"
         return ba
 
+    @property
+    def channel(self):
+        return getattr(self, "_channel", None)
 
 class ClientUser(User):
     r"""Represents the :class:`User` that is connected to Discord.

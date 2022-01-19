@@ -6,8 +6,6 @@ DisCode is an asynchronous Python API wrapper for the Discord REST and Gateway A
 import discode
 
 client = discode.Client()
-# You can specify an event loop
-# in the parameters of discode.Client
 
 # the coroutine under the decorator
 # can have any name you wish to use

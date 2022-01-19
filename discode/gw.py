@@ -8,7 +8,9 @@ import zlib
 from .intents import Intents
 from .guild import Guild
 from .member import Member
+from .channel import TextChannel
 from . import utils
+from .activity import Activity
 from .errors import GatewayError, PrivilegedIntentsRequired
 
 class OP:
@@ -44,6 +46,7 @@ class WS:
         self.buffer = bytearray()
         self.ZLIB_SUFFIX = b'\x00\x00\xff\xff'
         self.last_send = 0
+        self.dispatch = data.pop("dispatch")
 
     def get_latency(self):
         return self._last_ack - self._last_send
@@ -64,10 +67,6 @@ class WS:
     @property
     def is_ready(self):
         return self._ready.is_set()
-
-    async def dispatch(self, *args, **kwargs):
-        _dispatch = self.data.get("dispatch")
-        self.loop.create_task(_dispatch(*args, **kwargs))
 
     async def _get_gateway(self, use_zlib=True, v=9):
         data = await self.http.request("GET", "/gateway")
@@ -115,7 +114,7 @@ class WS:
         await self.listen()
 
     async def wait_until_ready(self) -> None:
-        await self._ready.wait()
+        return await self._ready.wait()
 
     async def identify(self):
         data = {
@@ -213,18 +212,21 @@ class WS:
                             await self.chunk_guild(int(gdata.get("id")))
 
                             gdata["http"] = self.http
+                            gdata["_channels"] = {}
+                            for ch in gdata.pop("channels", []):
+                                ch["http"] = self.http
+                                ch["id"] = int(ch.get("id", 0))
+                                if ch.get("type") == 0:
+                                    gdata["_channels"][ch.get("id")]  = TextChannel(**ch)
                             guild = Guild(**gdata)
                             self.guilds.append(guild)
 
                     elif event == "GUILD_MEMBERS_CHUNK":
                         guild = self.http.client.get_guild(int(data["d"].get("guild_id")))
-                        for member in data.get("d").get("members"):
+                        for member in data["d"].get("members"):
                             member["http"] = self.http
                             mem = Member(**member)
-                            try:
-                                guild._members.append(mem)
-                            except:
-                                guild._members = [mem]
+                            guild._members[mem.id] = mem
 
     @property
     def hb_payload(self):
@@ -239,6 +241,26 @@ class WS:
             self._last_send = time.perf_counter()
             await asyncio.sleep(interval)
 
+    async def change_presence(self, status = None, activity = None, since = None):
+        if activity:
+            if not isinstance(activity, Activity):
+                raise TypeError("activity must be derived from discord.Activity")
+            else:
+                activity = [activity.get_payload()]
+        else:
+            activity = []
+
+        if status == "idle":
+            since = int(time.time() * 1000)
+
+        p = {
+                "op": OP.PRESENCE,
+                "afk": False,
+                "since": since,
+                "status": status
+        }
+        return await self.send_json(p)
+
     async def chunk_guild(self, _id: int, *, query: str = "", limit: int = 0, presences: bool = False, nonce = None):
         payload = {
             "op": OP.REQUEST_MEMBERS,
@@ -251,5 +273,5 @@ class WS:
         if nonce:
             payload["d"]["nonce"] = nonce
         if presences:
-            payload["presenses"] = presences
-        return await self.http.ws.send_json(payload)
+            payload["presences"] = presences
+        return await self.send_json(payload)

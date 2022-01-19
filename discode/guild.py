@@ -26,6 +26,8 @@ class Guild:
         self.vanity_url_code = data.get("vanity_url_code")
         self.banner = data.get("banner")
         self.premium_tier = data.get("premium_tier")
+        self._members: dict = {}
+        self._channels: dict = data.get("_channels")
 
     @property
     def mfa_level(self) -> int:
@@ -52,31 +54,18 @@ class Guild:
 
     @property
     def members(self) -> List[Member]:
+        memlist = []
         if getattr(self, "_members", None):
-            return self._members
+            for mem in self._members:
+                memlist.append(self._members[mem])
+        return memlist
 
     @property
     def channels(self) -> List[Union[TextChannel, Channel]]:
-        if hasattr(self, "_channels"):
-            return self._channels
-
-        self._channels = []
-        for ch in self.data.get("channels"):
-            ch["http"] = self.http
-            _type = ch.get("type")
-            if _type == 0:
-                self._channels.append(TextChannel(**ch))
-            else:
-                self._channels.append(Channel(**ch))
-
-        return self._channels
+        return [self._channels[ch_id] for ch_id in self._channels]
 
     def get_member(self, member_id):
-        for member in self.members:
-            if member.id == member_id:
-                return member
+        return self._members.get(member_id)
 
     def get_channel(self, channel_id: int) -> Union[Channel, TextChannel]:
-        for channel in self.channels:
-            if channel.id == channel_id:
-                return channel
+        return self._channels.get(channel_id)

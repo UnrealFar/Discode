@@ -1,6 +1,7 @@
 import asyncio
+from typing import Optional
 
-__all__ = ("TextChannel",)
+__all__ = ("TextChannel", "DMChannel")
 
 
 class Channel:
@@ -29,49 +30,81 @@ class TextChannel(Channel):
     r"""Represents a Discord text channel.
     A text channel is a normal channel inside of a guild in which users can chat.
     """
+    __slots__ = (
+        "id",
+        "guild_id",
+        "type",
+        "_guild",
+        "http"
+    )
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.type = 0
+    def __init__(
+        self,
+        id,
+        *,
+        guild = None,
+        http = None,
+        **kwargs
+    ):
+        del kwargs
+        self.id: int = int(id)
+        self.type: int = 0
+        self._guild = guild
+        self.http = http
 
     @property
     def guild(self):
         r"""Get the guild that the text channel belongs to.
         """
-        return self.http.client.get_guild(int(self.data.get("guild_id")))
+        return self._guild
 
-    async def send(self, content = None, **kwargs):
+    async def send(
+        self,
+        *content: Optional[str],
+        **kwargs
+    ):
         r"""Send a message to the text channel. Returns the sent :class:`Message`.
         """
-        if content:
-            kwargs["content"] = content
-
-        message = await self.http.send_message(
-            channel_id = self.id,
+        print(self.id)
+        return await self.http.send_message(
+            self.id,
+            *content,
             **kwargs,
         )
 
-        return message
+    def copy(self):
+        return TextChannel(
+            id = self.id,
+        )
 
 class DMChannel(Channel):
-    __slots__ = [
+    __slots__ = (
         "id",
         "type",
-        "data"
-    ]
+        "user",
+        "http"
+    )
 
-    def __init__(self, **data):
-        self.data = data
-        self.id = int(data.pop("id", None))
+    def __init__(
+        self,
+        channel_id,
+        *,
+        user = None,
+        http = None
+    ):
+        self.id: int = int(channel_id)
         self.type: int = 1
+        self.user = None
+        self.http = http
 
-    async def send(self, content = None, **kwargs):
-        if content:
-            kwargs["content"] = content
+    async def send(
+        self,
+        *content: Optional[str],
+        **kwargs
+    ):
 
-        message = await self.http.send_message(
-            channel_id = self.id,
-            **kwargs,
+        return await self.http.send_message(
+            self.id,
+            *content,
+            **kwargs
         )
-
-        return message

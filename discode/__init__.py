@@ -39,12 +39,13 @@ from .embeds import *
 from .member import *
 from .colours import *
 from .enums import *
+from .activity import *
 from .components import *
 from . import commands
 
 __author__ = "TheFarGG"
 __copyright__ = "Copyright (c) 2021-present TheFarGG"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 class VersionInfo(NamedTuple):
@@ -53,5 +54,5 @@ class VersionInfo(NamedTuple):
     micro: int
     level: Literal["alpha", "beta", "final"]
 
-version_info = VersionInfo(major=1, minor=0, micro=0, level="final")
+version_info = VersionInfo(major=1, minor=1, micro=0, level="final")
 

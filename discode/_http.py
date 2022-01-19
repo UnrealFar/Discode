@@ -60,7 +60,12 @@ class HTTP:
 
             else:
                 err = f"Something unknown happened while trying to make a {method.lower()} request to {self.api_url + endpoint}"
-                raise HTTPError(err, await resp.text(), code = resp.status)
+                try:
+                    data = await resp.json()
+                    data = data.pop("message", data)
+                except:
+                    data = await resp.text()
+                raise HTTPError(err, data, code = resp.status)
 
     async def connect(self):
         if self.session.closed:
@@ -92,11 +97,11 @@ class HTTP:
         if not self.session.closed:
             await self.session.close()
 
-    async def send_message(self, channel_id, **kwargs) -> Message:
+    async def send_message(self, channel_id, *content, **kwargs) -> Message:
         data = {}
 
-        if kwargs.get("content", None):
-            data["content"] = str(kwargs.pop("content"))
+        if len(content) >= 1:
+            data["content"] = str().join((str(content) for content in content))
 
         if kwargs.get("embed", None):
             data["embeds"] = [kwargs.pop("embed").get_payload()]
@@ -134,7 +139,6 @@ class HTTP:
             for row in rows:
                 data["components"].append(row.get_payload())
 
-        print(data)
         msgdata = await self.request("POST", f"/channels/{channel_id}/messages", json=data)
         msgdata["http"] = self
         return Message(**msgdata)

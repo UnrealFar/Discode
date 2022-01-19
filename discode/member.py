@@ -1,8 +1,10 @@
+from typing import Optional, Any
+
 from .user import User
 from .channel import DMChannel
 
 class Member:
-    __slots__ = [
+    __slots__ = (
         "user",
         "id",
         "name",
@@ -12,7 +14,7 @@ class Member:
         "joined_at",
         "channel",
         "http"
-    ]
+    )
 
     r"""Represents a Discord guild member.
     """
@@ -29,6 +31,9 @@ class Member:
     def __str__(self) -> str:
         return f"{self.name}#{self.discriminator}"
 
+    def __eq__(self, other: Any) -> bool:
+        return (self == other) or (self.id == getattr(other, "id"))
+
     @property
     def mention(self) -> str:
         return f"<@{self.id}>"
@@ -43,25 +48,25 @@ class Member:
     def roles(self):
         return self.data.get("roles")
 
-    async def send(self, content = None, **kwargs):
-        if content:
-            kwargs["content"] = content
+    async def send(self, *content: Optional[str], **kwargs):
 
         ch = await self._get_channel()
 
-        return await self.http.send_message(
-            channel_id = ch.id,
+        return await ch.send(
+            *content,
             **kwargs
         )
 
     async def _get_channel(self):
-        if not hasattr(self.user, "channel"):
+        if not hasattr(self.user, "_channel"):
             json = {"recipient_id": self.id}
             req = await self.http.request(
                 "POST",
                 "/users/@me/channels",
                 json = json
             )
-            req["http"] = self
-            self.user.channel = DMChannel(**req)
+            data = {}
+            data["channel_id"] = req.pop("id", None)
+            data["http"] = self
+            self.user._channel = DMChannel(**data)
         return self.user.channel

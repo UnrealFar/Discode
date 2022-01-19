@@ -15,8 +15,6 @@ def get_latency():
 @client.on_event("ready")
 async def ready():
     print(f"{client.user} is ready!")
-    latency = get_latency()
-    print(f"My latency is {latency}ms")
     print(f"Intents Int: {client.http.ws.intents.value}")
 
 
@@ -74,7 +72,7 @@ async def on_message(message: discode.Message):
                 error = traceback.format_exc()
                 errorEm = discode.Embed(
                     title = "Error while excecuting code!",
-                    description = f"```{error}```"
+                    description = f"```py\n{error}```"
                 )
                 await channel.send(embed = errorEm)
 

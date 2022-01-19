@@ -2,7 +2,7 @@ import asyncio
 from typing import Union, List
 
 from .user import User
-from .channel import TextChannel, Channel, DMChannel
+from .channel import TextChannel, DMChannel
 from .embeds import Embed
 from .member import Member
 from .guild import Guild
@@ -75,8 +75,7 @@ class Message:
    
     @property
     def channel(self):
-        self._get_channel()
-        return self._channel
+        return self._get_channel()
 
     @property
     def components(self) -> List[Button]:
@@ -122,7 +121,24 @@ class Message:
             return self._channel
         else:
             if isinstance(self.author, User):
-                self._channel = getattr(self.author, "channel", None)
+                ch = getattr(self.author, "channel", None)
+                if not ch:
+                    ch = DMChannel(
+                        id = self.channel_id,
+                        http = self.http,
+                        user = self.author
+                    )
+                    self._channel = ch
+                    self._author._channel = ch
+                return ch
             elif isinstance(self.author, Member):
-                self._channel = getattr(self.author.user, "channel", None)
-            return self._channel
+                ch = getattr(self.author.user, "channel", None)
+                if not ch:
+                    ch = DMChannel(
+                        id = self.channel_id,
+                        http = self.http,
+                        user = self.author.user
+                    )
+                    self._channel = ch
+                    self.author.user._channel = ch
+                return ch

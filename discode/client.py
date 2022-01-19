@@ -6,6 +6,7 @@ from typing import Optional, Callable, List, Union
 from ._http import HTTP
 from .user import ClientUser
 from .guild import Guild
+from .activity import Activity
 from .channel import Channel, TextChannel
 from .member import Member
 from .intents import Intents
@@ -18,6 +19,8 @@ class Client:
 
     Parameters
     ----------
+    owner_ids: List[:class:`int`]
+        The unique IDs of the owners of the bot.
     message_limit: :class:`int`
         The maximum amount of messages to have in the cache. Messages are cached to reduce api callsand prevent ratelimits.
 
@@ -44,6 +47,8 @@ class Client:
 
     def __init__(
         self,
+        owner_id: int = None,
+        owner_ids: List[int] = None,
         message_limit: int = None,
         chunk_guilds_at_startup: bool = True,
         intents: Optional[Intents] = None,
@@ -58,6 +63,8 @@ class Client:
         self.message_limit: Optional[int] = message_limit
         self.intents = intents if intents else Intents.default()
         self.active_interactions = []
+        self.owner_id = owner_id
+        self.owner_ids = [owner_id] if owner_ids == None else owner_ids
 
     @property
     def user(self) -> ClientUser:
@@ -209,3 +216,6 @@ class Client:
         This is an API request. Use :meth:`Client.get_channel` to get a channel from the cache.
         """
         return await self.http.fetch_channel(channel_id)
+
+    async def change_presence(self, status = None, activity: Activity = None, since = None):
+        await self.http.ws.change_presence(status = status, activity = activity, since = since)
