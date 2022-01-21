@@ -1,5 +1,5 @@
-# DisCode
-DisCode is an asynchronous Python API wrapper for the Discord REST and Gateway API. This project was inspired by [Discord.py](https://github.com/rapptz/discord.py) 
+# Discode
+Discode is an asynchronous Python API wrapper for the Discord REST and Gateway API. This project was inspired by [Discord.py](https://github.com/rapptz/discord.py) and may contain similar functioning.
 
 ### Basic Example Usage
 ```py
@@ -15,7 +15,9 @@ async def ready():
 
 @client.on_event("message")
 async def message(message: discode.Message):
-    print(message.content)
+    content = message.content
+    if content.startswith("?hi"):
+        await message.channel.send("Hiii!!!")
 
 client.start("YOUR-TOKEN-HERE")
 ```

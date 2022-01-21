@@ -2,9 +2,10 @@ import asyncio
 import os
 import traceback
 import discode
+from discode import commands
 TOKEN = os.environ["BOT_TOKEN"]
 
-client = discode.commands.Bot(
+client = commands.Bot(
     prefix = "d!",
     intents = discode.Intents.default()
 )
@@ -59,6 +60,7 @@ async def on_message(message: discode.Message):
                 return await channel.send("Only owners can do this sus")
             try:
                 data = msg[6:]
+                data = ";".join(data.splitlines())
                 args = {
                     "discode": discode,
                     "message": message,

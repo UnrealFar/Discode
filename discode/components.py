@@ -1,7 +1,7 @@
 from typing import Optional, Union, Any, List
 import os
 
-from .enums import ButtonStyle
+from .styles import ButtonStyle
 
 class Component:
     r"""Represnts a Discord component.

@@ -38,7 +38,7 @@ from .errors import *
 from .embeds import *
 from .member import *
 from .colours import *
-from .enums import *
+from .styles import *
 from .activity import *
 from .components import *
 from . import commands

@@ -1,17 +1,20 @@
 from setuptools import setup
 import re
 
-version = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]', open("discode/__init__.py").read(), re.MULTILINE).group(1)
+file = open("discode/__init__.py")
+version = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]', file.read(), re.MULTILINE).group(1)
+file.close()
 
-readme = open("README.md").read()
+with open("README.md") as readme:
+    readme = readme.read()
 
-requirements = open("requirements.txt").read().splitlines()
+with open("requirements.txt") as req:
+    requirements = req.read().splitlines()
 
-packages = [
+packages = (
     "discode",
-    "discode.commands",
-    "discode.components"
-]
+    "discode.commands"
+)
 
 classifiers = [
     "License :: OSI Approved :: MIT License",
