@@ -1,5 +1,7 @@
 r"""DisCode is an asynchronous Python API wrapper for the Discord Rest API and Gateway API wrapper.
+"""
 
+LICENSE = r"""
 LICENSE
 -------
 
@@ -43,9 +45,10 @@ from .activity import *
 from .components import *
 from . import commands
 
+__name__ + "discode"
 __author__ = "TheFarGG"
 __copyright__ = "Copyright (c) 2021-present TheFarGG"
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 
 class VersionInfo(NamedTuple):
@@ -54,5 +57,10 @@ class VersionInfo(NamedTuple):
     micro: int
     level: Literal["alpha", "beta", "final"]
 
-version_info = VersionInfo(major=1, minor=1, micro=0, level="final")
+version_info: NamedTuple = VersionInfo(
+    major=1,
+    minor=1,
+    micro=1,
+    level="final"
+)
 

@@ -10,6 +10,7 @@ from .activity import Activity
 from .channel import Channel, TextChannel
 from .member import Member
 from .intents import Intents
+from . import base_events
 
 __all__ = ("Client",)
 
@@ -22,7 +23,7 @@ class Client:
     owner_ids: List[:class:`int`]
         The unique IDs of the owners of the bot.
     message_limit: :class:`int`
-        The maximum amount of messages to have in the cache. Messages are cached to reduce api callsand prevent ratelimits.
+        The maximum amount of messages to have in the cache. Messages are cached to reduce api calls and prevent ratelimits.
 
     chunk_guilds_at_startup: :class:`bool`
         If the client should chunk up all the guild members before the ready event. Defaults to :class:`True`.
@@ -65,6 +66,8 @@ class Client:
         self.active_interactions = []
         self.owner_id = owner_id
         self.owner_ids = [owner_id] if owner_ids == None else owner_ids
+        for ev in dir(base_events):
+            if ev.start
 
     @property
     def user(self) -> ClientUser:

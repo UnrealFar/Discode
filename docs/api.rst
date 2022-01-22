@@ -25,6 +25,7 @@ Client
 
 .. autoclass:: Client
     :members:
+    :undoc-members:
 
 
 Event Reference
@@ -38,6 +39,11 @@ Example:
     @client.on_event("ready")
     async def ready_event():
        print(client.user, "is ready!")
+
+Here are all the available events the client provides.
+
+.. automodule:: discode.base_events
+    :members:
 
 Discord Objects
 ----------------
