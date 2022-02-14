@@ -1,3 +1,0 @@
-
-# TODO
-## Make command objects.

@@ -5,7 +5,7 @@ Discode is an asynchronous Python API wrapper for the Discord REST and Gateway A
 ```py
 import discode
 
-client = discode.Client()
+client = discode.Client(token = "YOUR-TOKEN-HERE")
 
 # the coroutine under the decorator
 # can have any name you wish to use
@@ -19,5 +19,5 @@ async def message(message: discode.Message):
     if content.startswith("?hi"):
         await message.channel.send("Hiii!!!")
 
-client.start("YOUR-TOKEN-HERE")
+client.run()
 ```

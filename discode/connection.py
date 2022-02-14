@@ -1,0 +1,33 @@
+
+from typing import Dict
+
+from .models import Guild, User
+
+
+class Connection:
+    def __init__(self, client):
+        self.client = client
+        self.http = client._http
+        self.user_cache: Dict[int, User] = {}
+        self.guild_cache : Dict[int, Guild] = {}
+        self.message_cache = {}
+
+    def get_user(self, user_id) -> User:
+        return self.user_cache.get(int(user_id))
+
+    def add_user(self, user: User) -> User:
+        self.user_cache[user.id] = user
+        return user
+
+    def remove_user(self, user_id) -> User:
+        return self.user_cache.pop(int(user_id), None)
+
+    def get_guild(self, guild_id: int) -> Guild:
+        return self.guidl_cache.get(int(guild_id))
+
+    def add_guild(self, guild: Guild) -> Guild:
+        self.guild_cache[guild.id] = guild
+        return guild
+
+    def remove_guild(self, guild_id: int) -> Guild:
+        return self.guild_cache.pop(int(guild_id), None)

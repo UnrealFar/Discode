@@ -1,7 +1,7 @@
 # Config file for docs
 
-import re
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
@@ -12,7 +12,11 @@ project = "DisCode"
 copyright = "2021-present TheFarGG"
 author = "TheFarGG"
 
-version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', open("../discode/__init__.py").read(), re.MULTILINE).group(1)
+version = re.search(
+    r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+    open("../discode/__init__.py").read(),
+    re.MULTILINE,
+).group(1)
 
 release = version if version else "Unknown"
 
@@ -22,7 +26,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.napoleon"
+    "sphinx.ext.napoleon",
 ]
 
 autodoc_member_order = "bysource"
@@ -35,11 +39,9 @@ extlinks = {
     "github": ("https://github.com/TheFarGG/Discode/", "Link to Github Repository")
 }
 
-intersphinx_mapping = {
-    "py": ("https://docs.python.org/3", None)
-}
+intersphinx_mapping = {"py": ("https://docs.python.org/3", None)}
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 default_role = "object"
 language = None
 
@@ -50,4 +52,4 @@ htmlhelp_basename = "discode.doc"
 html_context = {"dsc": "https://discord.gg/5JXT6npG4X"}
 html_show_sphinx = False
 html_theme = "furo"
-html_static_path = ['_static']
+html_static_path = ["_static"]
