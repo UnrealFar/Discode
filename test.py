@@ -1,4 +1,4 @@
-import os, asyncio, traceback
+import os, asyncio, traceback, textwrap
 
 import discode
 
@@ -24,18 +24,22 @@ async def on_message(message: discode.Message):
 
     elif msg.startswith("eval", len("d!")):
         if message.author.id not in [859996173943177226, 739443421202087966, 551257232143024139]:
-            return await channel.send("Only owners can do this sus")
+            return await message.channel.send("Only owners can do this sus")
         try:
             data = msg[6:]
-            data = ";".join(data.splitlines())
             args = {
                 "discode": discode,
                 "message": message,
+                "author": message.author,
+                "channel": message.channel,
                 "bot": bot,
-                "client": bot
+                "client": bot,
+                "imp": __import__,
+                **globals()
             }
-            exec(f"async def func():{data}", args)
+            exec(f"async def func():\n{textwrap.indent(data, '    ')}", args)
             resp = await eval("func()", args)
+            resp = str(resp).replace(token, "[TOKEN]")
             await message.channel.send(resp)
         except:
             error = traceback.format_exc()

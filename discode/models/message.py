@@ -32,6 +32,9 @@ class Message(BaseMessage):
         self.author_id: int = int(payload.pop("author").get("id", 0))
         del payload
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id = {self.id} content = {self.content}"
+
     def __str__(self) -> str:
         return self.content
 

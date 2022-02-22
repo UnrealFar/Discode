@@ -29,7 +29,6 @@ class TextChannel(MessageChannel):
         self.name: str = payload.pop("name", None)
         self.guild_id: int = payload.pop("guild_id", None)
 
-
     async def send(
         self,
         content: Optional[str] = ...,

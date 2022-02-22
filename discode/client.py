@@ -87,6 +87,8 @@ class Client:
         return wrapper
 
     def add_listener(self, coro, event):
+        if event not in vars(GatewayEvent).values():
+            raise Exception(f"Invalid Listener: {event}")
         if event in self._listeners:
             self._listeners.append(coro)
         else:

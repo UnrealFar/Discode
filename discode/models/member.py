@@ -50,7 +50,7 @@ class Member(GuildMember, MessageChannel):
         self._banner: str = payload.pop("banner", None)
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.name} id = {self.id} name = {self.name} discriminator = {self.discriminator} nick = {self.nick}>"
+        return f"<{self.__class__.__name__} id = {self.id} name = {self.name} discriminator = {self.discriminator} nick = {self.nick}>"
 
     def __str__(self) -> str:
         return f"{self.display_name}#{self.discriminator}"

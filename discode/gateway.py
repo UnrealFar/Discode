@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import aiohttp
 import json, zlib
-import sys
+import sys, time
 
 from .enums import GatewayEvent
 from .connection import Connection
@@ -39,13 +39,16 @@ class Gateway:
 
         self.token: str = client.token
         self.intents = client.intents
-        self.loop: asyncio.AbstractEventLoop = client.loop
         self.sequence: int = None
         self.session: aiohttp.ClientSession = self.http._session
         self.options = {}
         self.inflator = zlib.decompressobj()
         self.buffer = bytearray()
         self.ZLIB_SUFFIX = b'\x00\x00\xff\xff'
+
+    @property
+    def latency(self) -> float:
+        return self.handler.latency
 
     async def _get_gateway(self, compress = True, v = 9) -> str:
         data = await self.http.request("GET", "/gateway")
@@ -73,6 +76,7 @@ class Gateway:
         )
 
     async def heartbeat(self):
+        self.handler.last_hb = time.perf_counter()
         await self.send_json({"op": OP.HEARTBEAT, "d": self.sequence})
 
     async def heartbeat_task(self, interval: float):
@@ -131,6 +135,8 @@ class SocketHandler:
 
     def __init__(self, gateway: Gateway):
         self.gateway: Gateway = gateway
+        self.last_hb: int = int()
+        self.latency: float = float("inf")
         self.connection: Connection = gateway.connection
         self.loop: asyncio.AbstractEventLoop = gateway.loop
 
@@ -153,6 +159,9 @@ class SocketHandler:
             interval = data.get("heartbeat_interval") / 1000
             self.hb_task = self.loop.create_task(gateway.heartbeat_task(interval))
             await self.dispatch(GatewayEvent.READY)
+
+        elif op == OP.HEARTBEAT_ACK:
+            self.latency = time.perf_counter() - self.last_hb
 
         elif op == OP.DISPATCH:
             await self.dispatch(GatewayEvent.DISPATCH, payload)

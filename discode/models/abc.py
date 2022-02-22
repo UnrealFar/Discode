@@ -10,10 +10,12 @@ from typing import (
 )
 
 class Snowflake:
-    __slots__ = ()
+    __slots__ = tuple()
 
     id: int
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id = {self.id}>"
 
 class User(Snowflake):
 
@@ -46,6 +48,12 @@ class Guild(Snowflake):
 class MessageChannel(Snowflake):
 
     name: str
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id = {self.id} name = {self.name}>"
+
+    def __str__(self) -> str:
+        return f"<#{self.id}>"
 
     async def send(
         self,
