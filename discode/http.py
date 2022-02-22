@@ -1,12 +1,11 @@
 import asyncio
 import json
-from typing import Any, Dict, Optional
+from typing import Any, List, Dict, Optional
 
 import aiohttp
 
 from .connection import Connection
-from .gateway import Gateway
-from .models import ClientUser
+from .models import ClientUser, Message, Member
 
 
 class HTTP:
@@ -50,15 +49,38 @@ class HTTP:
         if self._session:
             await self._session.close()
 
+    async def send_message(
+        self,
+        channel_id: int,
+        content: str = ...,
+        *,
+        embeds: List = ...
+    ) -> Message:
+        kwargs = {}
+        
+        if content != ...:
+            kwargs["content"] = str(content)
+
+        payload = await self.request(
+            "POST",
+            f"/channels/{channel_id}/messages",
+            json = kwargs
+        )
+
+        return Message(self.connection, payload)
+
     async def edit_member(
         self,
-        guild_id: int,
-        member_id: int,
+        member: Member,
         payload: Dict[str, Any],
         reason: Optional[str] = ...,
     ):
-        kwargs = dict()
+        kwargs = {}
         kwargs["json"] = payload
         if reason != ...:
             kwargs["reason"] = reason
-        await self.request("PATCH", f"/guilds/{guild_id}/members/{member_id}", **kwargs)
+        await self.request(
+            "PATCH",
+            f"/guilds/{member.guild.id}/members/{member.id}",
+            **kwargs
+            )

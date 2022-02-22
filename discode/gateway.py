@@ -8,7 +8,7 @@ import sys
 
 from .enums import GatewayEvent
 from .connection import Connection
-from .models import Guild
+from .models import Guild, Message
 
 class OP:
     DISPATCH = 0
@@ -142,12 +142,12 @@ class SocketHandler:
         if not isinstance(payload, dict):
             return
         gateway = self.gateway
+        client = gateway.client
         connection = self.connection
         gateway.sequence = payload.get("s")
         op = payload.get("op")
         data = payload.get("d")
         t = str(payload.get("t")).lower()
-        print(t)
 
         if op == OP.HELLO:
             interval = data.get("heartbeat_interval") / 1000
@@ -156,7 +156,13 @@ class SocketHandler:
 
         elif op == OP.DISPATCH:
             await self.dispatch(GatewayEvent.DISPATCH, payload)
-            if t == GatewayEvent.GUILD_CREATE:
+
+            if t == GatewayEvent.MESSAGE_CREATE:
+                message = Message(connection, data)
+                connection.message_cache[message.id] = message
+                await self.dispatch(GatewayEvent.MESSAGE_CREATE, message)
+
+            elif t == GatewayEvent.GUILD_CREATE:
                 guild = Guild(connection, data)
-                connection.add_guild(guild)
-            
+                connection.add_guild(guild)       
+                await self.dispatch(GatewayEvent.GUILD_CREATE, guild)     

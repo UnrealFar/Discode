@@ -1,11 +1,11 @@
 import datetime
 from typing import Any, Dict, List, Optional
 
-from .abc import GuildMember, Snowflake
+from .abc import GuildMember, Snowflake, MessageChannel
 from .user import User
 
 
-class Member(GuildMember):
+class Member(GuildMember, MessageChannel):
 
     __slots__ = (
         "id",
@@ -25,7 +25,7 @@ class Member(GuildMember):
 
     def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
-        self._guild = payload.pop("guild")
+        self._guild = payload.pop("guild", None)
         user = payload.pop("user", {})
         uid = user.get("id")
         self._user: User = connection.get_user(uid)
@@ -57,7 +57,11 @@ class Member(GuildMember):
 
     @property
     def display_name(self) -> str:
-        return self.nick if self.nick else self.name
+        return self.nick or self.name
+
+    @property
+    def guild(self):
+        return self._guild
 
     async def edit(
         self,
@@ -69,7 +73,6 @@ class Member(GuildMember):
         reason: Optional[str] = ...,
     ):
         kwargs = dict()
-        guild_id = self.guild.id
         http = self._connection.http
         if nick != ...:
             kwargs["nick"] = nick
@@ -80,4 +83,4 @@ class Member(GuildMember):
         if roles != ...:
             kwargs["roles"] = tuple(str(r.id) for r in roles)
         if len(kwargs) >= 1:
-            await http.edit_member(guild_id, self.id, kwargs, reason)
+            await http.edit_member(self, kwargs, reason)

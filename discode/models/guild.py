@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 from .abc import Guild as _Guild
 from .assets import Asset
 from .member import Member
+from .channel import TextChannel
 
 
 class Guild(_Guild):
@@ -29,6 +30,11 @@ class Guild(_Guild):
             mem = Member(connection, m)
             self._add_member(mem)
         self._channels: Dict = {}
+        for c in payload.pop("channels", []):
+            c["guild"] = self
+            if c["type"] == 0:
+                ch = TextChannel(connection, c)
+                self._add_channel(ch)
         self._roles: Dict = {}
 
     @property

@@ -7,13 +7,11 @@ import discode
 
 client = discode.Client(token = "YOUR-TOKEN-HERE")
 
-# the coroutine under the decorator
-# can have any name you wish to use
-@client.on_event("ready")
+@client.on_event(discode.GatewayEvent.READY)
 async def ready():
     print(f"{client.user} is ready!")
 
-@client.on_event("message")
+@client.on_event(discode.GatewayEvent.MESSAGE_CREATE)
 async def message(message: discode.Message):
     content = message.content
     if content.startswith("?hi"):

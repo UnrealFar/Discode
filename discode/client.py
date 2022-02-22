@@ -1,14 +1,14 @@
 import asyncio
 import aiohttp
 
-from typing import Union, Optional, Any, NamedTuple, Dict, List
+from typing import Union, Optional, Any, Dict, List
 
 from .connection import Connection
 from .gateway import Gateway
 from .flags import Intents
 from .enums import GatewayEvent
 from .http import HTTP
-from .models import Guild, User, ClientUser
+from .models import Guild, User, ClientUser, Message
 
 class Client:
 
@@ -41,6 +41,10 @@ class Client:
     @property
     def guilds(self) -> List[Guild]:
         return [g for g in self._connection.guild_cache.values()]
+
+    @property
+    def messages(self) -> List[Message]:
+        return [g for g in self._connection.message_cache.values()]
 
     @property
     def session(self) -> aiohttp.ClientSession:
@@ -99,5 +103,5 @@ class Client:
             await ev(*args, **kwargs)
         listeners = self._listeners.get(event, [])
         for l in listeners:
-            await l(*args, **kwargs)
+            self.loop.create_task(l(*args, **kwargs))
 

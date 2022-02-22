@@ -1,7 +1,7 @@
 
 from typing import Dict
 
-from .models import Guild, User
+from .models import Guild, User, Message
 
 
 class Connection:
@@ -9,8 +9,9 @@ class Connection:
         self.client = client
         self.http = client._http
         self.user_cache: Dict[int, User] = {}
-        self.guild_cache : Dict[int, Guild] = {}
-        self.message_cache = {}
+        self.guild_cache: Dict[int, Guild] = {}
+        self.message_cache: Dict[int, Message] = {}
+        self.channel_cache = {}
 
     def get_user(self, user_id) -> User:
         return self.user_cache.get(int(user_id))
@@ -23,7 +24,7 @@ class Connection:
         return self.user_cache.pop(int(user_id), None)
 
     def get_guild(self, guild_id: int) -> Guild:
-        return self.guidl_cache.get(int(guild_id))
+        return self.guild_cache.get(int(guild_id))
 
     def add_guild(self, guild: Guild) -> Guild:
         self.guild_cache[guild.id] = guild
