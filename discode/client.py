@@ -31,6 +31,10 @@ class Client:
         self._listeners: Dict[str, Any] = {}
 
     @property
+    def latency(self) -> float:
+        return self._ws.latency
+
+    @property
     def user(self) -> ClientUser:
         return self._user
 

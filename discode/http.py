@@ -34,6 +34,12 @@ class HTTP:
         async with self._session.request(method, url, **kwargs) as req:
             if 300 > req.status >= 200:
                 return await req.json()
+            else:
+                try:
+                    e = await req.json()
+                except:
+                    raise Exception(await req.text())
+                raise Exception(e.get("message"))
 
     async def login(self):
         self._session: aiohttp.ClientSession = aiohttp.ClientSession()
@@ -54,6 +60,7 @@ class HTTP:
         channel_id: int,
         content: str = ...,
         *,
+        files: List = [],
         embeds: List = ...
     ) -> Message:
         kwargs = {}
@@ -61,11 +68,11 @@ class HTTP:
         if content != ...:
             kwargs["content"] = str(content)
 
-        payload = await self.request(
-            "POST",
-            f"/channels/{channel_id}/messages",
-            json = kwargs
-        )
+        if len(files) == 0:
+            payload = await self.request("POST",f"/channels/{channel_id}/messages",json = kwargs)
+
+        else:
+            p = {}
 
         return Message(self.connection, payload)
 

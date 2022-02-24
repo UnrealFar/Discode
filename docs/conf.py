@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.append(os.path.abspath("extensions"))
 
-project = "DisCode"
+project = "Discode"
 
 copyright = "2021-present TheFarGG"
 author = "TheFarGG"
@@ -27,6 +27,8 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "jinja",
+    "attributetable"
 ]
 
 autodoc_member_order = "bysource"

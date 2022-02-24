@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from .abc import Asset as _Asset
 
+__all__ = ("Asset",)
 
 class Asset(_Asset):
-    r"""Represents a Discord Asset. An asset can be either of the following: `user avatar`, `user banner`, `guild icon`, `guild banner`."""
+    r"""
+    Represents a Discord Asset. An asset can be either of the following: `user avatar`, `user banner`, `guild icon`, `guild banner`.
+    """
 
     __slots__ = ("_url", "_key", "_animated", "_connection")
 
@@ -58,12 +61,15 @@ class Asset(_Asset):
 
     @property
     def url(self) -> str:
+        r""":class:`str`: Returns the url of the asset."""
         return self._url
 
     @property
     def key(self) -> str:
+        r""":class:`str`: Returns the identifying keynof the asset."""
         return self._key
 
     @property
     def animated(self) -> bool:
+        r""":class:`bool`: Returns :class:`True` if the asset is animated else :class:`False`"""
         return self._animated

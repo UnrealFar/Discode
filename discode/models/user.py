@@ -1,11 +1,12 @@
 from typing import Any, Dict
 
 from ..flags import UserFlags
-from .abc import User
+from .abc import User as _User
 from .assets import Asset
 
+__all__ = ("User", "ClientUser")
 
-class User(User):
+class User(_User):
     r"""Represents a Discord User."""
 
     __slots__ = (

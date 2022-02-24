@@ -6,13 +6,31 @@ from typing import (
     List,
     Optional,
     Union,
+    TYPE_CHECKING,
     overload
+)
+
+if TYPE_CHECKING:
+    from ..connection import Connection
+
+__all__ = (
+    "Snowflake",
+    "User",
+    "BaseMessage",
+    "Guild",
+    "GuildMember",
+    "Asset"
 )
 
 class Snowflake:
     __slots__ = tuple()
 
     id: int
+    if TYPE_CHECKING:
+        _connection: Connection
+
+    def __init__(self, connection: Connection, payload: dict):
+        ...
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id}>"
@@ -33,7 +51,6 @@ class BaseMessage(Snowflake):
 
     content: str
     channel_id: int
-    channel: MessageChannel
     author: Union[User, GuildMember]
 
 
@@ -43,31 +60,6 @@ class Guild(Snowflake):
     description: str
     icon: Asset
     banner: Asset
-
-
-class MessageChannel(Snowflake):
-
-    name: str
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} id = {self.id} name = {self.name}>"
-
-    def __str__(self) -> str:
-        return f"<#{self.id}>"
-
-    async def send(
-        self,
-        content: Optional[str] = ...,
-        *,
-        embeds: List = ...
-    ) -> BaseMessage:
-        http = self._connection.http
-
-        return await http.send_message(
-            self.id,
-            content = content,
-            embeds = embeds
-        )
 
 class GuildMember(User):
 

@@ -7,6 +7,8 @@ from .guild import Guild
 from .user import User
 from .member import Member
 
+__all__ = ("Message",)
+
 class Message(BaseMessage):
 
     __slots__ = (

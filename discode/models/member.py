@@ -1,11 +1,17 @@
 import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from .abc import GuildMember, Snowflake, MessageChannel
+if TYPE_CHECKING:
+    from .guild import Guild
+
 from .user import User
 
+from .channel import DMChannel
+from .abc import Snowflake, GuildMember
 
-class Member(GuildMember, MessageChannel):
+__all__ = ("Member",)
+
+class Member(GuildMember, DMChannel):
 
     __slots__ = (
         "id",
@@ -13,7 +19,7 @@ class Member(GuildMember, MessageChannel):
         "name",
         "discriminator",
         "nick",
-        "_guild",
+        "guild_id",
         "_roles",
         "joined_at",
         "dm_channel",
@@ -25,7 +31,7 @@ class Member(GuildMember, MessageChannel):
 
     def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
-        self._guild = payload.pop("guild", None)
+        self.guild_id = payload.pop("guild_id", None)
         user = payload.pop("user", {})
         uid = user.get("id")
         self._user: User = connection.get_user(uid)
@@ -57,11 +63,13 @@ class Member(GuildMember, MessageChannel):
 
     @property
     def display_name(self) -> str:
+        r""":class:`str`: Returns the nickname of the member if they have one, else their username"""
         return self.nick or self.name
 
     @property
     def guild(self):
-        return self._guild
+        r""":class:`Guild`: The guild to which the member is attached to."""
+        return self._connection.get_guild(self.guild_id)
 
     async def edit(
         self,
@@ -72,10 +80,20 @@ class Member(GuildMember, MessageChannel):
         roles: List[Snowflake] = ...,
         reason: Optional[str] = ...,
     ):
+        r"""
+        Edit the member.
+
+        Returns
+        -------
+        :class:`Member`
+            The member which was edited.
+        """
         kwargs = dict()
         http = self._connection.http
         if nick != ...:
+            nick = str(nick)
             kwargs["nick"] = nick
+            self.nick = nick
         if deafen != ...:
             kwargs["mute"] = mute
         if deafen != ...:
@@ -84,3 +102,5 @@ class Member(GuildMember, MessageChannel):
             kwargs["roles"] = tuple(str(r.id) for r in roles)
         if len(kwargs) >= 1:
             await http.edit_member(self, kwargs, reason)
+
+        return self
