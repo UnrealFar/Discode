@@ -17,6 +17,9 @@ Features
 - Ratelimit handling
 - Based on Object Oriented Python
 
+Manuals
+--------
+
 .. toctree::
     api.rst
 
@@ -25,7 +28,6 @@ Links
 - :github:`Github <>`
 
 Indices and tables
-i
 
 * :ref:`genindex`
 * :ref:`modindex`
