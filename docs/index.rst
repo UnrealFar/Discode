@@ -10,10 +10,6 @@ Welcome to Discode's documentation!
 ====================================
 Discode is an asynchronous Python API wrapper for the Discord gateway and REST API.
 
-.. toctree::
-
-    api.rst
-
 Features
 ------------
 - Easy to use
@@ -21,16 +17,15 @@ Features
 - Ratelimit handling
 - Based on Object Oriented Python
 
-Manuals
---------
-- :doc:`api`
+.. toctree::
+    api.rst
 
 Links
 --------
 - :github:`Github <>`
 
 Indices and tables
-==================
+i
 
 * :ref:`genindex`
 * :ref:`modindex`
