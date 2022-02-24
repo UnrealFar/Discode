@@ -13,7 +13,7 @@ with open("README.md") as readme:
 with open("requirements.txt") as req:
     requirements = req.read().splitlines()
 
-packages = ("discode", "discode.models", "discode.commands")
+packages = ("discode", "discode.models", "discode.dataclasses")
 
 classifiers = [
     "License :: OSI Approved :: MIT License",
