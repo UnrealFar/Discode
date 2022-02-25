@@ -28,7 +28,7 @@ class Message(BaseMessage):
         self._connection = connection
         self.id: int = int(payload.pop("id"))
         self.content: str = payload.pop("content", None)
-        self.channel_id: int = int(payload.pop("channel_id", None))
+        self.channel_id: int = int(payload.pop("channel_id"))
         g_id = payload.pop("guild_id", None)
         self.guild_id: int = int(g_id) if g_id else None
         self.author_id: int = int(payload.pop("author").get("id", 0))

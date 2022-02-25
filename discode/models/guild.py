@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from .abc import Guild as _Guild
 from .assets import Asset
@@ -19,7 +19,7 @@ class Guild(_Guild):
     id: :class:`int`
         The unique ID of the guild.
     name: :class:`str`
-        The bane of the guild.
+        The name of the guild.
     """
 
     __slots__ = (
@@ -82,9 +82,14 @@ class Guild(_Guild):
         return self._members.pop(member.id, None)
 
     @property
-    def channels(self):
-        r"""List[:class:`TextChannel`]: All the channels attached to the guild cached by the client."""
-        return [c for c in getattr(self, "_roles", {}).values()]
+    def channels(self) -> Union[TextChannel]:
+        r"""List[:class:`TextChannel`]: All the channels attached to the guilds cached by the client."""
+        return [c for c in self._channels.values()]
+
+    @property
+    def text_channels(self) -> List[TextChannel]:
+        r"""List[:class:`TextChannel`]: All the text channels cached by the guild."""
+        return [c for c in self._channels.values() if c.type == 0]
 
     def _add_channel(self, channel):
         self._channels[channel.id] = channel

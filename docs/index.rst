@@ -1,9 +1,9 @@
 
 .. meta::
-    :title: Discode's Documentation.
+    :title: Discode Documentation || Home
     :type: website
     :url: https://discode.readthedocs.io
-    :description: Official documentation for Discode.
+    :description: Homepage of the documentation for Discode.
     :keywords: docs, discode, discord
 
 Welcome to Discode's documentation!
@@ -28,6 +28,7 @@ Links
 - :github:`Github <>`
 
 Indices and tables
+-------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

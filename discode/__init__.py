@@ -1,7 +1,13 @@
 
-import uvloop, asyncio
+import asyncio, platform
 
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+try:
+    import uvloop
+except:
+    if "linux" in str(platform.platform()).lower():
+        print("UVLoop is supported on Linux devices. Please install it for better performance!")
+else:
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 def __get_event_loop():
   try:
@@ -17,4 +23,4 @@ from .enums import *
 from .models import *
 from .dataclasses import *
 
-__version__ = "2.0.0a3"
+__version__ = "2.0.0b1"

@@ -15,10 +15,8 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Snowflake",
-    "User",
     "BaseMessage",
     "Guild",
-    "GuildMember",
     "Asset"
 )
 
@@ -35,23 +33,11 @@ class Snowflake:
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id}>"
 
-class User(Snowflake):
-
-    name: str
-    discriminator: str
-    bot: bool
-    avatar: Asset
-    banner: Asset
-
-    @property
-    def display_name(self) -> str:
-        raise NotImplementedError
 
 class BaseMessage(Snowflake):
 
     content: str
     channel_id: int
-    author: Union[User, GuildMember]
 
 
 class Guild(Snowflake):
@@ -61,19 +47,6 @@ class Guild(Snowflake):
     icon: Asset
     banner: Asset
 
-class GuildMember(User):
-
-    user: User
-    guild: Guild
-    name: str
-    discriminator: str
-    bot: bool
-    system: bool
-    created_at: datetime.datetime
-    default_avatar: Asset
-    avatar: Optional[Asset]
-    mutual_guilds: List[Guild]
-    banner: Optional[Asset]
 
 class Asset:
 

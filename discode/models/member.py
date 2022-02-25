@@ -3,15 +3,14 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .guild import Guild
+    from .channel import DMChannel
 
 from .user import User
-
-from .channel import DMChannel
-from .abc import Snowflake, GuildMember
+from .abc import Snowflake
 
 __all__ = ("Member",)
 
-class Member(GuildMember, DMChannel):
+class Member(User):
 
     __slots__ = (
         "id",
@@ -54,6 +53,7 @@ class Member(GuildMember, DMChannel):
             )
         self._avatar: str = payload.pop("avatar", None)
         self._banner: str = payload.pop("banner", None)
+        self.dm_channel: DMChannel = None
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id} name = {self.name} discriminator = {self.discriminator} nick = {self.nick}>"

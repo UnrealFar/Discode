@@ -8,7 +8,7 @@ from .gateway import Gateway
 from .flags import Intents
 from .enums import GatewayEvent
 from .http import HTTP
-from .models import Guild, User, ClientUser, Message
+from .models import Guild, User, ClientUser, Message, TextChannel, DMChannel
 
 class Client:
 
@@ -19,19 +19,22 @@ class Client:
         token: str,
         *,
         intents: Intents = None,
-        loop: asyncio.AbstractEventLoop = None
+        loop: asyncio.AbstractEventLoop = None,
+        api_version: int = 10
     ):
         self.token: str = token.strip()
         self.loop: asyncio.AbstractEventLoop = (
             loop if loop else asyncio.get_event_loop()
         )
         self.intents: Intents = intents if intents else Intents.all()
+        self.api_version: int = api_version
         self._http: HTTP = HTTP(self)
         self._connection: Connection = Connection(self)
         self._listeners: Dict[str, Any] = {}
 
     @property
     def latency(self) -> float:
+        r""""""
         return self._ws.latency
 
     @property
@@ -49,6 +52,14 @@ class Client:
     @property
     def messages(self) -> List[Message]:
         return [g for g in self._connection.message_cache.values()]
+
+    @property
+    def channels(self) -> List[Union[TextChannel, DMChannel]]:
+        return [c for c in self._connection.channel_cache.values()]
+
+    @property
+    def dm_channels(self) -> List[DMChannel]:
+        return [c for c in self._connection.channel_cache.values() if c.type == 1]
 
     @property
     def session(self) -> aiohttp.ClientSession:

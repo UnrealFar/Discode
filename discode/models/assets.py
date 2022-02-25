@@ -66,7 +66,7 @@ class Asset(_Asset):
 
     @property
     def key(self) -> str:
-        r""":class:`str`: Returns the identifying keynof the asset."""
+        r""":class:`str`: Returns the identifying key of the asset."""
         return self._key
 
     @property

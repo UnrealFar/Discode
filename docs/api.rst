@@ -1,3 +1,11 @@
+
+.. meta::
+    :title: Discode Documentation || API Reference
+    :type: website
+    :url: https://discode.readthedocs.io/api.html
+    :description: API Documentation for Discode
+    :keywords: docs, discode, discord
+
 .. currentmodule:: discode
 
 API Reference
@@ -21,6 +29,23 @@ The base client to use to connect to the api and receive events.
 
 .. autoclass :: Client
     :members:
+
+Event Reference
+----------------
+
+Discode allows users to listen for dispatch events received thru the gateway. All events must be registered in the following format:
+
+.. code-block:: py
+
+    @client.on_event(discode.GatewayEvent.READY)
+    async def on_ready():
+        print(client.user, "is ready"!)
+
+See :class:`GatewayEvent` for more information on dispatch events.
+
+.. autoclass:: GatewayEvent
+    :members:
+    :undoc-members:
 
 Models
 --------

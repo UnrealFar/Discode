@@ -1,12 +1,12 @@
 from typing import Any, Dict
 
 from ..flags import UserFlags
-from .abc import User as _User
 from .assets import Asset
+from .channel import DMChannel, Messageable
 
 __all__ = ("User", "ClientUser")
 
-class User(_User):
+class User(Messageable):
     r"""Represents a Discord User."""
 
     __slots__ = (
@@ -18,6 +18,7 @@ class User(_User):
         "flags",
         "user_flags",
         "accent_colour",
+        "dm_channel",
         "_avatar",
         "_banner",
         "_connection",
@@ -34,6 +35,7 @@ class User(_User):
         self.accent_colour = payload.pop("accent_color", 0)
         self.flags: UserFlags = UserFlags(payload.pop("flags", 0))
         self.public_flags: UserFlags = UserFlags(payload.pop("public_flags", 0))
+        self.dm_channel: DMChannel = None
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id} name = {self.name} discriminator = {self.discriminator} bot = {self.bot}>"
@@ -58,6 +60,17 @@ class User(_User):
         if self._banner:
             return Asset.user_banner(self)
 
+    async def create_dm(self) -> DMChannel:
+        http = self._connection.http
+        p = await http.request(
+            "POST",
+            "/users/@me/channels",
+            json = {"recipient_id": str(self.id)}
+        )
+        p["user"] = self
+        dm = DMChannel(self._connection, p)
+        self.dm_channel = dm
+        return dm
 
 class ClientUser(User):
     r"""Represents the User that is connected to the gateway."""

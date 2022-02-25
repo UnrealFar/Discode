@@ -1,21 +1,23 @@
 import asyncio
 import json
-from typing import Any, List, Dict, Optional
+from typing import Any, List, Dict, Optional,TYPE_CHECKING
 
 import aiohttp
 
 from .connection import Connection
 from .models import ClientUser, Message, Member
 
+if TYPE_CHECKING:
+    from .client import Client
 
 class HTTP:
-    BASE_URL = "https://discord.com/api/v9"
+    BASE_URL = "https://discord.com/api/v10"
 
     def __init__(
         self,
         client,
     ):
-        self.client = client
+        self.client: Client = client
 
     @property
     def connection(self) -> Connection:
@@ -43,6 +45,7 @@ class HTTP:
 
     async def login(self):
         self._session: aiohttp.ClientSession = aiohttp.ClientSession()
+        self.BASE_URL = self.BASE_URL.replace("v10", f"v{self.client.api_version}")
         p = await self.request("GET", "/users/@me")
         user = ClientUser(self.connection, p)
         self.connection.my_id = user.id
@@ -58,17 +61,23 @@ class HTTP:
     async def send_message(
         self,
         channel_id: int,
-        content: str = ...,
         *,
-        files: List = [],
-        embeds: List = ...
+        content: str = ...,
+        files: List= [],
+        embeds: List = []
     ) -> Message:
         kwargs = {}
         
         if content != ...:
             kwargs["content"] = str(content)
 
+        if len(embeds) >= 1:
+            kwargs["embeds"] = list()
+            for embed in embeds:
+                kwargs["embeds"].append(embed.to_dict())
+
         if len(files) == 0:
+            print(kwargs)
             payload = await self.request("POST",f"/channels/{channel_id}/messages",json = kwargs)
 
         else:

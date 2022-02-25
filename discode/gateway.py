@@ -129,7 +129,7 @@ class Gateway:
         await self.identify()
         while True:
             recv = await self.receive()
-            await self.handler.handle_events(recv)
+            self.loop.create_task(self.handler.handle_events(recv))
 
 class SocketHandler:
 
@@ -139,6 +139,7 @@ class SocketHandler:
         self.latency: float = float("inf")
         self.connection: Connection = gateway.connection
         self.loop: asyncio.AbstractEventLoop = gateway.loop
+        self.waiting_guilds: dict = {}
 
     @property
     def dispatch(self):
@@ -158,7 +159,6 @@ class SocketHandler:
         if op == OP.HELLO:
             interval = data.get("heartbeat_interval") / 1000
             self.hb_task = self.loop.create_task(gateway.heartbeat_task(interval))
-            await self.dispatch(GatewayEvent.READY)
 
         elif op == OP.HEARTBEAT_ACK:
             self.latency = time.perf_counter() - self.last_hb
@@ -166,12 +166,52 @@ class SocketHandler:
         elif op == OP.DISPATCH:
             await self.dispatch(GatewayEvent.DISPATCH, payload)
 
-            if t == GatewayEvent.MESSAGE_CREATE:
+            if t == GatewayEvent.READY:
+                unavailable_guilds = data.pop("guilds", [])
+                for ug in unavailable_guilds:
+                    if "id" not in ug:
+                        continue
+                    ug_id = int(ug["id"])
+                    fut = self.loop.create_future()
+                    self.waiting_guilds[ug_id] = fut
+                    try:
+                        await asyncio.wait_for(fut, timeout = 2)
+                    except asyncio.TimeoutError:
+                        pass
+                await self.dispatch(GatewayEvent.READY)
+
+            elif t == GatewayEvent.MESSAGE_CREATE:
                 message = Message(connection, data)
                 connection.message_cache[message.id] = message
+                if not message.guild:
+                    ch = connection.channel_cache.get(message.channel_id)
+                    if not ch:
+                        dm = await message.author.create_dm()
+                        connection.channel_cache[dm.id] = dm
                 await self.dispatch(GatewayEvent.MESSAGE_CREATE, message)
 
             elif t == GatewayEvent.GUILD_CREATE:
                 guild = Guild(connection, data)
-                connection.add_guild(guild)       
+                if guild.id in self.waiting_guilds:
+                    fut: asyncio.Future= self.waiting_guilds[guild.id]
+                    try:
+                        fut.set_result(0)
+                        self.waiting_guilds.pop(guild.id, None)
+                    except asyncio.InvalidStateError:
+                        pass
+                connection.add_guild(guild)
                 await self.dispatch(GatewayEvent.GUILD_CREATE, guild)     
+
+            elif t == GatewayEvent.GUILD_UPDATE:
+                after = Guild(connection, data)
+                before = connection.get_guild(after.id)
+                connection.add_guild(after)
+                await self.dispatch(GatewayEvent.GUILD_UPDATE, before, after)
+
+            elif t == GatewayEvent.GUILD_DELETE:
+                if data.pop("unavailable", True):
+                    fut = self.waiting_guilds.pop(int(data.pop("id", 0)), None)
+                    if isinstance(fut, asyncio.Future):
+                        fut.cancel()
+                else:
+                    await self.dispatch(GatewayEvent.GUILD_DELETE, self.connection.remove_guild(int(data.pop("id", 0))))

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import (
     Any,
+    Union,
     Optional,
     List,
     Dict,
@@ -14,8 +15,10 @@ if TYPE_CHECKING:
     from .message import Message
     from .guild import Guild
     from .user import User
+    from .member import Member
 
 from .abc import Snowflake
+from ..dataclasses import Embed, File
 
 __all__ = (
     "TextChannel",
@@ -28,8 +31,8 @@ class Messageable(Snowflake):
         self,
         content: Optional[str] = ...,
         *,
-        embeds: List = [],
-        files: List = []
+        embeds: List[Embed] = [],
+        files: List[File] = []
     ) -> Message:
         r"""
         Send a message to the current channel.
@@ -48,9 +51,16 @@ class Messageable(Snowflake):
             The message that was sent to the destination.
         """
         http = self._connection.http
+        if hasattr(self, "dm_channel"):
+            channel = self.dm_channel
+            if not channel:
+                channel = await self.create_dm()
+            channel_id = channel.id
+        else:
+            channel_id = self.id
 
         return await http.send_message(
-            self.id,
+            channel_id,
             content = content,
             embeds = embeds,
             files = files
@@ -115,6 +125,8 @@ class DMChannel(Messageable):
     def __init__(self, connection, payload):
         self._connection = connection
         self.id = int(payload.pop("id"))
+        connection.channel_cache[self.id] = self
+        self.user: Union[User, Member] = payload.pop("user", None)
         self.recepients: List[User] = []
         for recep in payload.pop("recepients", []):
             rec = connection.get_user(recep.get("id"))

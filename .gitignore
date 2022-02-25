@@ -1,7 +1,6 @@
 *.replit
 *.breakpoints
-__pychache__/
-discode/__pycache__
+**/__pycache__
 docs/_build
 *poetry.lock
 *pyproject.toml

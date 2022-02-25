@@ -14,7 +14,7 @@ class Connection:
         self.channel_cache = {}
 
     def get_user(self, user_id) -> User:
-        return self.user_cache.get(int(user_id))
+        return self.user_cache.get(user_id)
 
     def add_user(self, user: User) -> User:
         self.user_cache[user.id] = user
@@ -24,11 +24,11 @@ class Connection:
         return self.user_cache.pop(int(user_id), None)
 
     def get_guild(self, guild_id: int) -> Guild:
-        return self.guild_cache.get(int(guild_id))
+        return self.guild_cache.get(guild_id)
 
     def add_guild(self, guild: Guild) -> Guild:
         self.guild_cache[guild.id] = guild
         return guild
 
     def remove_guild(self, guild_id: int) -> Guild:
-        return self.guild_cache.pop(int(guild_id), None)
+        return self.guild_cache.pop(guild_id, None)
