@@ -6,6 +6,8 @@ import aiohttp
 import json, zlib
 import sys, time
 
+from typing import NamedTuple, Union, Callable, List, Dict
+
 from .enums import GatewayEvent
 from .connection import Connection
 from .models import Guild, Message
@@ -49,6 +51,12 @@ class Gateway:
     @property
     def latency(self) -> float:
         return self.handler.latency
+
+    def wait_for(self, event, check) -> asyncio.Future:
+        fut = self.loop.create_future()
+        waiter = DispatchListener(event = event, future = fut, check = check)
+        self.handler.dispatch_listeners.append(waiter)
+        return fut
 
     async def _get_gateway(self, compress = True, v = 9) -> str:
         data = await self.http.request("GET", "/gateway")
@@ -139,17 +147,17 @@ class SocketHandler:
         self.latency: float = float("inf")
         self.connection: Connection = gateway.connection
         self.loop: asyncio.AbstractEventLoop = gateway.loop
+        self.dispatch_listeners: List[DispatchListener] = []
         self.waiting_guilds: dict = {}
 
-    @property
-    def dispatch(self):
-        return self.gateway.client.dispatch
+    async def dispatch(self, event, *args, **kwargs):
+        await self.gateway.client.dispatch(event, *args, **kwargs)
+        await self.check(event, *args, **kwargs)
 
     async def handle_events(self, payload: dict):
         if not isinstance(payload, dict):
             return
         gateway = self.gateway
-        client = gateway.client
         connection = self.connection
         gateway.sequence = payload.get("s")
         op = payload.get("op")
@@ -215,3 +223,21 @@ class SocketHandler:
                         fut.cancel()
                 else:
                     await self.dispatch(GatewayEvent.GUILD_DELETE, self.connection.remove_guild(int(data.pop("id", 0))))
+
+    async def check(self, event: str, *args, **kwargs):
+        for listener in self.dispatch_listeners:
+            if listener.event == event:
+                check = listener.check
+                if asyncio.iscoroutinefunction(check):
+                    result = await check(*args, **kwargs)
+                else:
+                    result = check(*args, **kwargs)
+                if result:
+                    listener.future.set_result(0)
+                    self.dispatch_listeners.remove(listener)
+
+class DispatchListener(NamedTuple):
+
+    event: str
+    future: asyncio.Future
+    check: Callable

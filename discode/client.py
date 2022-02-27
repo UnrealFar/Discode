@@ -122,3 +122,10 @@ class Client:
         for l in listeners:
             self.loop.create_task(l(*args, **kwargs))
 
+    async def wait_for(self, event, check, *, timeout = 30):
+        listener = self._ws.wait_for(event, check)
+        fut = listener.future
+        try:
+            return await asyncio.wait_for(fut, timeout = timeout)
+        except asyncio.TimeoutError as exc:
+            raise exc
