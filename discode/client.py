@@ -1,6 +1,8 @@
 import asyncio
 import aiohttp
 
+__all__ = ("Client",)
+
 from typing import Union, Optional, Any, Dict, List
 
 from .connection import Connection
@@ -9,6 +11,7 @@ from .flags import Intents
 from .enums import GatewayEvent
 from .http import HTTP
 from .models import Guild, User, ClientUser, Message, TextChannel, DMChannel
+from . import utils
 
 class Client:
 
@@ -60,6 +63,10 @@ class Client:
     @property
     def dm_channels(self) -> List[DMChannel]:
         return [c for c in self._connection.channel_cache.values() if c.type == 1]
+
+    @property
+    def invite_url(self) -> str:
+        return utils.invite_url(client_id = self.user.id)
 
     @property
     def session(self) -> aiohttp.ClientSession:
@@ -128,4 +135,7 @@ class Client:
         try:
             return await asyncio.wait_for(fut, timeout = timeout)
         except asyncio.TimeoutError as exc:
+            fut.cancel()
+            try: del listener
+            except: pass
             raise exc

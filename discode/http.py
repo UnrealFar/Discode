@@ -6,6 +6,7 @@ import aiohttp
 
 from .connection import Connection
 from .models import ClientUser, Message, Member
+from .utils import UNDEFINED
 
 if TYPE_CHECKING:
     from .client import Client
@@ -62,13 +63,13 @@ class HTTP:
         self,
         channel_id: int,
         *,
-        content: str = ...,
-        files: List= [],
+        content: str = UNDEFINED,
+        files: List = [],
         embeds: List = []
     ) -> Message:
         kwargs = {}
         
-        if content != ...:
+        if content != UNDEFINED:
             kwargs["content"] = str(content)
 
         if len(embeds) >= 1:
@@ -89,11 +90,11 @@ class HTTP:
         self,
         member: Member,
         payload: Dict[str, Any],
-        reason: Optional[str] = ...,
+        reason: Optional[str] = UNDEFINED
     ):
         kwargs = {}
         kwargs["json"] = payload
-        if reason != ...:
+        if reason != UNDEFINED:
             kwargs["reason"] = reason
         await self.request(
             "PATCH",

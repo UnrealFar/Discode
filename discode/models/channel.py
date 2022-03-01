@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 from .abc import Snowflake
 from ..dataclasses import Embed, File
+from ..utils import UNDEFINED
 
 __all__ = (
     "TextChannel",
@@ -29,7 +30,7 @@ class Messageable(Snowflake):
 
     async def send(
         self,
-        content: Optional[str] = ...,
+        content: Optional[str] = UNDEFINED,
         *,
         embeds: List[Embed] = [],
         files: List[File] = []

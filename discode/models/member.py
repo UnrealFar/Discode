@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
 from .user import User
 from .abc import Snowflake
+from ..utils import UNDEFINED
 
 __all__ = ("Member",)
 
@@ -74,11 +75,11 @@ class Member(User):
     async def edit(
         self,
         *,
-        nick: Optional[str] = ...,
-        mute: bool = ...,
-        deafen: bool = ...,
-        roles: List[Snowflake] = ...,
-        reason: Optional[str] = ...,
+        nick: Optional[str] = UNDEFINED,
+        mute: bool = UNDEFINED,
+        deafen: bool = UNDEFINED,
+        roles: List[Snowflake] = [],
+        reason: Optional[str] = UNDEFINED
     ):
         r"""
         Edit the member.
@@ -90,15 +91,15 @@ class Member(User):
         """
         kwargs = dict()
         http = self._connection.http
-        if nick != ...:
+        if nick != UNDEFINED:
             nick = str(nick)
             kwargs["nick"] = nick
             self.nick = nick
-        if deafen != ...:
+        if deafen != UNDEFINED:
             kwargs["mute"] = mute
-        if deafen != ...:
+        if deafen != UNDEFINED:
             kwargs["deaf"] = deafen
-        if roles != ...:
+        if len(roles) >= 1:
             kwargs["roles"] = tuple(str(r.id) for r in roles)
         if len(kwargs) >= 1:
             await http.edit_member(self, kwargs, reason)

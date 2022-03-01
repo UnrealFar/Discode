@@ -52,11 +52,11 @@ class Gateway:
     def latency(self) -> float:
         return self.handler.latency
 
-    def wait_for(self, event, check) -> asyncio.Future:
+    def wait_for(self, event, check) -> DispatchListener:
         fut = self.loop.create_future()
         waiter = DispatchListener(event = event, future = fut, check = check)
         self.handler.dispatch_listeners.append(waiter)
-        return fut
+        return waiter
 
     async def _get_gateway(self, compress = True, v = 9) -> str:
         data = await self.http.request("GET", "/gateway")

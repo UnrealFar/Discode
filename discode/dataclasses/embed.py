@@ -64,7 +64,7 @@ class Embed:
         if self.title:
             ret["title"] = self.title
         if self.description:
-            ret["title"] = self.description
+            ret["description"] = self.description
         if self.colour:
             ret["color"] = self.colour
         if len(self.fields) >= 1:

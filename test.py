@@ -31,7 +31,14 @@ async def on_message(message: discode.Message):
         except:
             pass
 
-    elif msg.startswith("eval", len("d!")):
+    elif msg.startswith("d!invite"):
+        embed = discode.Embed(
+            title = "Invite Discode!",
+            description = bot.invite_url
+        )
+        await message.channel.send(embeds = (embed,))
+
+    elif msg.startswith("d!eval"):
         if message.author.id not in [859996173943177226, 739443421202087966, 551257232143024139, 685082846993317953]:
             return await message.channel.send("Only owners can do this sus")
         try:
