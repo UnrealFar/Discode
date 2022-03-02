@@ -1,17 +1,19 @@
 import asyncio
+
 import aiohttp
 
 __all__ = ("Client",)
 
-from typing import Union, Optional, Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
-from .connection import Connection
-from .gateway import Gateway
-from .flags import Intents
-from .enums import GatewayEvent
-from .http import HTTP
-from .models import Guild, User, ClientUser, Message, TextChannel, DMChannel
 from . import utils
+from .connection import Connection
+from .enums import GatewayEvent
+from .flags import Intents
+from .gateway import Gateway
+from .http import HTTP
+from .models import ClientUser, DMChannel, Guild, Message, TextChannel, User
+
 
 class Client:
 
@@ -23,7 +25,7 @@ class Client:
         *,
         intents: Intents = None,
         loop: asyncio.AbstractEventLoop = None,
-        api_version: int = 10
+        api_version: int = 10,
     ):
         self.token: str = token.strip()
         self.loop: asyncio.AbstractEventLoop = (
@@ -66,7 +68,7 @@ class Client:
 
     @property
     def invite_url(self) -> str:
-        return utils.invite_url(client_id = self.user.id)
+        return utils.invite_url(client_id=self.user.id)
 
     @property
     def session(self) -> aiohttp.ClientSession:
@@ -104,8 +106,11 @@ class Client:
     def on_event(self, event: Union[str, GatewayEvent]):
         def wrapper(func):
             if not asyncio.iscoroutinefunction(func):
-                raise TypeError(f"Couldn't register {func} as a listener as it was of type {type(func)} and the library expected a coroutine!")
+                raise TypeError(
+                    f"Couldn't register {func} as a listener as it was of type {type(func)} and the library expected a coroutine!"
+                )
             self.add_listener(func, event)
+
         return wrapper
 
     def add_listener(self, coro, event):
@@ -116,12 +121,7 @@ class Client:
         else:
             self._listeners[event] = [coro]
 
-    async def dispatch(
-        self,
-        event,
-        *args,
-        **kwargs
-    ):
+    async def dispatch(self, event, *args, **kwargs):
         ev = getattr(self, f"on_{event}", None)
         if asyncio.iscoroutinefunction(ev):
             await ev(*args, **kwargs)
@@ -129,13 +129,15 @@ class Client:
         for l in listeners:
             self.loop.create_task(l(*args, **kwargs))
 
-    async def wait_for(self, event, check, *, timeout = 30):
+    async def wait_for(self, event, check, *, timeout=30):
         listener = self._ws.wait_for(event, check)
         fut = listener.future
         try:
-            return await asyncio.wait_for(fut, timeout = timeout)
+            return await asyncio.wait_for(fut, timeout=timeout)
         except asyncio.TimeoutError as exc:
             fut.cancel()
-            try: del listener
-            except: pass
+            try:
+                del listener
+            except:
+                pass
             raise exc

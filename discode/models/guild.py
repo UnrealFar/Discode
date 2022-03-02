@@ -2,12 +2,11 @@ from typing import Any, Dict, List, Union
 
 from .abc import Guild as _Guild
 from .assets import Asset
-from .member import Member
 from .channel import TextChannel
+from .member import Member
 
-__all__ = (
-    "Guild",
-)
+__all__ = ("Guild",)
+
 
 class Guild(_Guild):
     r"""

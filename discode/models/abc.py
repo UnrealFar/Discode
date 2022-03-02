@@ -1,14 +1,7 @@
-
 from __future__ import annotations
 
 import datetime
-from typing import (
-    List,
-    Optional,
-    Union,
-    TYPE_CHECKING,
-    overload
-)
+from typing import TYPE_CHECKING, List, Optional, Union, overload
 
 if TYPE_CHECKING:
     from ..connection import Connection
@@ -18,7 +11,8 @@ __all__ = (
     "BaseMessage",
     "Guild",
     "Asset"
-)
+    )
+
 
 class Snowflake:
     __slots__ = tuple()

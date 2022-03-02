@@ -1,18 +1,13 @@
-
-import os, io
-from typing import Optional, Union, TYPE_CHECKING
+import io
+import os
+from typing import TYPE_CHECKING, Optional, Union
 
 __all__ = ("File",)
 
+
 class File:
 
-    __slots__ = (
-        "fp",
-        "filename",
-        "spoiler",
-        "_close",
-        "_is_owner"
-    )
+    __slots__ = ("fp", "filename", "spoiler", "_close", "_is_owner")
 
     if TYPE_CHECKING:
         fp: io.BufferedIOBase
@@ -24,7 +19,7 @@ class File:
         fp: Union[str, bytes, os.PathLike, io.BufferedIOBase],
         *,
         filename: Optional[str] = None,
-        spoiler: bool= False
+        spoiler: bool = False
     ):
         if isinstance(fp, io.IOBase):
             self.fp = fp

@@ -1,14 +1,7 @@
-
 from __future__ import annotations
 
-from typing import (
-    Optional,
-    Union,
-    Any,
-    Dict,
-    List,
-    TYPE_CHECKING
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+
 
 class Embed:
     r"""Represents a Discord Embed.
@@ -22,15 +15,10 @@ class Embed:
         The description of the embed.
     colour: Union[hex, int]
         The colour of the embed. Can be of type :class:`int`, :class:`hex` or of :class:`Colour`
-    
+
     """
 
-    __slots__ = (
-        "title",
-        "description",
-        "colour",
-        "fields"
-    )
+    __slots__ = ("title", "description", "colour", "fields")
 
     if TYPE_CHECKING:
         title: str
@@ -43,19 +31,15 @@ class Embed:
         *,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        colour: Union[hex, int] = None
+        colour: Union[hex, int] = None,
     ):
         self.title = str(title) if title else None
         self.description = str(description) if description else None
         self.colour = int(colour) if colour else None
         self.fields = []
 
-    def add_field(
-        self,
-        name: Optional[str],
-        value: Optional[str]
-    ):
-        ret = EmbedField(name = name, value = value, embed = self)
+    def add_field(self, name: Optional[str], value: Optional[str]):
+        ret = EmbedField(name=name, value=value, embed=self)
         self.fields.append(ret)
         return ret
 
@@ -72,12 +56,9 @@ class Embed:
 
         return ret
 
+
 class EmbedField:
-    __slots__ = (
-        "name",
-        "value",
-        "embed"
-    )
+    __slots__ = ("name", "value", "embed")
 
     if TYPE_CHECKING:
         name: str
@@ -92,4 +73,4 @@ class EmbedField:
         self.embed = embed
 
     def to_dict(self):
-        return dict(name = self.name, value = self.value)
+        return dict(name=self.name, value=self.value)

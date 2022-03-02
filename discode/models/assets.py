@@ -4,6 +4,7 @@ from .abc import Asset as _Asset
 
 __all__ = ("Asset",)
 
+
 class Asset(_Asset):
     r"""
     Represents a Discord Asset. An asset can be either of the following: `user avatar`, `user banner`, `guild icon`, `guild banner`.
@@ -51,7 +52,7 @@ class Asset(_Asset):
         ic = guild._icon
         an = ic.startswith("a_")
         ext = "gif" if an else "png"
-        
+
         return cls(
             guild._connection,
             url=f"{cls.BASE_URL}/icons/{guild.id}/{ic}.{ext}?size=1024",
