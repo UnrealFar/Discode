@@ -6,6 +6,7 @@ https://github.com/Mecha-Karen/acord
 """
 
 from sphinx.application import Sphinx
+
 import discode
 
 
@@ -15,13 +16,16 @@ def worker(app: Sphinx, docname: str, source: list):
 
     src = source[0]
     rendered_source = app.builder.templates.render_string(
-        src, {
+        src,
+        {
             "discode": discode,
             "getattr": getattr,
             "dir": dir,
-            "disallow": ["Messageable", ],
+            "disallow": [
+                "Messageable",
+            ],
             "LINE_SEP": "\n",
-        }
+        },
     )
 
     source[0] = rendered_source

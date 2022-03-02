@@ -1,15 +1,6 @@
-
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Union,
-    Optional,
-    List,
-    Dict,
-    TYPE_CHECKING,
-    overload
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, overload
 
 if TYPE_CHECKING:
     from .message import Message
@@ -17,23 +8,23 @@ if TYPE_CHECKING:
     from .user import User
     from .member import Member
 
-from .abc import Snowflake
 from ..dataclasses import Embed, File
 from ..utils import UNDEFINED
+from .abc import Snowflake
 
 __all__ = (
     "TextChannel",
     "DMChannel"
-)
+    )
+
 
 class Messageable(Snowflake):
-
     async def send(
         self,
         content: Optional[str] = UNDEFINED,
         *,
         embeds: List[Embed] = [],
-        files: List[File] = []
+        files: List[File] = [],
     ) -> Message:
         r"""
         Send a message to the current channel.
@@ -61,11 +52,9 @@ class Messageable(Snowflake):
             channel_id = self.id
 
         return await http.send_message(
-            channel_id,
-            content = content,
-            embeds = embeds,
-            files = files
+            channel_id, content=content, embeds=embeds, files=files
         )
+
 
 class TextChannel(Messageable):
     r"""
@@ -86,20 +75,9 @@ class TextChannel(Messageable):
         Returns whether the channel is an NSFW channel.
     """
 
-    __slots__ = (
-        "id",
-        "name",
-        "type",
-        "guild_id",
-        "is_nsfw",
-        "_connection"
-    )
+    __slots__ = ("id", "name", "type", "guild_id", "is_nsfw", "_connection")
 
-    def __init__(
-        self,
-        connection,
-        payload: Dict[str, Any]
-    ):
+    def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
         self.id: int = int(payload.pop("id"))
         connection.channel_cache[self.id] = self
@@ -114,14 +92,10 @@ class TextChannel(Messageable):
         r""":class:`Guild`: The guild to which the channel belongs to."""
         return self._connection.get_guild(self.guild_id)
 
+
 class DMChannel(Messageable):
 
-    __slots__ = (
-        "id",
-        "type",
-        "recepients"
-        "_connection"
-    )
+    __slots__ = ("id", "type", "recepients" "_connection")
 
     def __init__(self, connection, payload):
         self._connection = connection

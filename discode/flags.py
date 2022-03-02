@@ -112,7 +112,15 @@ class Intents(Flags):
 
     @classmethod
     def all(cls) -> Intents:
-        return cls(sum((v for k, v in cls.__items__.items() if (isinstance(v, int) and k != "value"))))
+        return cls(
+            sum(
+                (
+                    v
+                    for k, v in cls.__items__.items()
+                    if (isinstance(v, int) and k != "value")
+                )
+            )
+        )
 
     @classmethod
     def unprivileged(cls) -> Intents:

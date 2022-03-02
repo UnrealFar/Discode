@@ -1,9 +1,5 @@
+from typing import Any, Iterable, final
 
-from typing import (
-    Any,
-    Iterable,
-    final,
-)
 
 @final
 class _UNDEFINED:
@@ -18,8 +14,8 @@ class _UNDEFINED:
     def __bool__(self) -> bool:
         return False
 
-UNDEFINED: Any = _UNDEFINED()
 
+UNDEFINED: Any = _UNDEFINED()
 
 
 def invite_url(
@@ -27,10 +23,8 @@ def invite_url(
     *,
     permissions: int = UNDEFINED,
     scopes: Iterable[str] = UNDEFINED,
-    redirect_uri: str = UNDEFINED
+    redirect_uri: str = UNDEFINED,
 ) -> str:
     ret = f"https://discord.com/oauth2/authorize?client_id={client_id}"
     ret += "&scope=" + "".join(scopes or ("bot",))
     return ret
-
-

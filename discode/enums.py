@@ -1,4 +1,3 @@
-
 class GatewayEvent:
     r"""
     This class has all available gateway events, and information on how to register a listener for each of the events. An event maybe registered like this:

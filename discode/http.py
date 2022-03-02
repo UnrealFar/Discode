@@ -1,15 +1,16 @@
 import asyncio
 import json
-from typing import Any, List, Dict, Optional,TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import aiohttp
 
 from .connection import Connection
-from .models import ClientUser, Message, Member
+from .models import ClientUser, Member, Message
 from .utils import UNDEFINED
 
 if TYPE_CHECKING:
     from .client import Client
+
 
 class HTTP:
     BASE_URL = "https://discord.com/api/v10"
@@ -65,10 +66,10 @@ class HTTP:
         *,
         content: str = UNDEFINED,
         files: List = [],
-        embeds: List = []
+        embeds: List = [],
     ) -> Message:
         kwargs = {}
-        
+
         if content != UNDEFINED:
             kwargs["content"] = str(content)
 
@@ -79,7 +80,9 @@ class HTTP:
 
         if len(files) == 0:
             print(kwargs)
-            payload = await self.request("POST",f"/channels/{channel_id}/messages",json = kwargs)
+            payload = await self.request(
+                "POST", f"/channels/{channel_id}/messages", json=kwargs
+            )
 
         else:
             p = {}
@@ -87,17 +90,12 @@ class HTTP:
         return Message(self.connection, payload)
 
     async def edit_member(
-        self,
-        member: Member,
-        payload: Dict[str, Any],
-        reason: Optional[str] = UNDEFINED
+        self, member: Member, payload: Dict[str, Any], reason: Optional[str] = UNDEFINED
     ):
         kwargs = {}
         kwargs["json"] = payload
         if reason != UNDEFINED:
             kwargs["reason"] = reason
         await self.request(
-            "PATCH",
-            f"/guilds/{member.guild.id}/members/{member.id}",
-            **kwargs
-            )
+            "PATCH", f"/guilds/{member.guild.id}/members/{member.id}", **kwargs
+        )

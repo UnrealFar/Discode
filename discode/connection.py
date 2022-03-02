@@ -1,7 +1,6 @@
-
 from typing import Dict
 
-from .models import Guild, User, Message
+from .models import Guild, Message, User
 
 
 class Connection:

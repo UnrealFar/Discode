@@ -28,7 +28,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "jinja",
-    "attributetable"
+    "attributetable",
 ]
 
 autodoc_member_order = "bysource"

@@ -1,16 +1,18 @@
-
 from __future__ import annotations
 
 import asyncio
+import json
+import sys
+import time
+import zlib
+from typing import Callable, Dict, List, NamedTuple, Union
+
 import aiohttp
-import json, zlib
-import sys, time
 
-from typing import NamedTuple, Union, Callable, List, Dict
-
-from .enums import GatewayEvent
 from .connection import Connection
+from .enums import GatewayEvent
 from .models import Guild, Message
+
 
 class OP:
     DISPATCH = 0
@@ -27,12 +29,9 @@ class OP:
     HEARTBEAT_ACK = 11
     GUILD_SYNC = 12
 
-class Gateway:
 
-    def __init__(
-        self,
-        client
-    ):
+class Gateway:
+    def __init__(self, client):
         self.client = client
         self.http = client._http
         self.connection = client._connection
@@ -46,7 +45,7 @@ class Gateway:
         self.options = {}
         self.inflator = zlib.decompressobj()
         self.buffer = bytearray()
-        self.ZLIB_SUFFIX = b'\x00\x00\xff\xff'
+        self.ZLIB_SUFFIX = b"\x00\x00\xff\xff"
 
     @property
     def latency(self) -> float:
@@ -54,11 +53,11 @@ class Gateway:
 
     def wait_for(self, event, check) -> DispatchListener:
         fut = self.loop.create_future()
-        waiter = DispatchListener(event = event, future = fut, check = check)
+        waiter = DispatchListener(event=event, future=fut, check=check)
         self.handler.dispatch_listeners.append(waiter)
         return waiter
 
-    async def _get_gateway(self, compress = True, v = 9) -> str:
+    async def _get_gateway(self, compress=True, v=9) -> str:
         data = await self.http.request("GET", "/gateway")
         url = data.get("url")
         url = f"{url}?encoding=json&v={v}"
@@ -77,9 +76,9 @@ class Gateway:
                     "properties": {
                         "$os": sys.platform,
                         "$browser": "discode",
-                        "$device": "discode"
-                    }
-                }
+                        "$device": "discode",
+                    },
+                },
             }
         )
 
@@ -92,7 +91,7 @@ class Gateway:
             await self.heartbeat()
             await asyncio.sleep(interval)
 
-    async def connect(self, version = 9, compress = True, reconnect = True):
+    async def connect(self, version=9, compress=True, reconnect=True):
         self.options["version"] = version
         self.options["reconnect"] = reconnect
         self.options["compress"] = compress
@@ -139,8 +138,8 @@ class Gateway:
             recv = await self.receive()
             self.loop.create_task(self.handler.handle_events(recv))
 
-class SocketHandler:
 
+class SocketHandler:
     def __init__(self, gateway: Gateway):
         self.gateway: Gateway = gateway
         self.last_hb: int = int()
@@ -183,7 +182,7 @@ class SocketHandler:
                     fut = self.loop.create_future()
                     self.waiting_guilds[ug_id] = fut
                     try:
-                        await asyncio.wait_for(fut, timeout = 2)
+                        await asyncio.wait_for(fut, timeout=2)
                     except asyncio.TimeoutError:
                         pass
                 await self.dispatch(GatewayEvent.READY)
@@ -201,14 +200,14 @@ class SocketHandler:
             elif t == GatewayEvent.GUILD_CREATE:
                 guild = Guild(connection, data)
                 if guild.id in self.waiting_guilds:
-                    fut: asyncio.Future= self.waiting_guilds[guild.id]
+                    fut: asyncio.Future = self.waiting_guilds[guild.id]
                     try:
                         fut.set_result(0)
                         self.waiting_guilds.pop(guild.id, None)
                     except asyncio.InvalidStateError:
                         pass
                 connection.add_guild(guild)
-                await self.dispatch(GatewayEvent.GUILD_CREATE, guild)     
+                await self.dispatch(GatewayEvent.GUILD_CREATE, guild)
 
             elif t == GatewayEvent.GUILD_UPDATE:
                 after = Guild(connection, data)
@@ -222,7 +221,10 @@ class SocketHandler:
                     if isinstance(fut, asyncio.Future):
                         fut.cancel()
                 else:
-                    await self.dispatch(GatewayEvent.GUILD_DELETE, self.connection.remove_guild(int(data.pop("id", 0))))
+                    await self.dispatch(
+                        GatewayEvent.GUILD_DELETE,
+                        self.connection.remove_guild(int(data.pop("id", 0))),
+                    )
 
     async def check(self, event: str, *args, **kwargs):
         for listener in self.dispatch_listeners:
@@ -235,6 +237,7 @@ class SocketHandler:
                 if result:
                     listener.future.set_result(0)
                     self.dispatch_listeners.remove(listener)
+
 
 class DispatchListener(NamedTuple):
 

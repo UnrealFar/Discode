@@ -1,15 +1,16 @@
 import datetime
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from .guild import Guild
     from .channel import DMChannel
 
-from .user import User
-from .abc import Snowflake
 from ..utils import UNDEFINED
+from .abc import Snowflake
+from .user import User
 
 __all__ = ("Member",)
+
 
 class Member(User):
 
@@ -79,7 +80,7 @@ class Member(User):
         mute: bool = UNDEFINED,
         deafen: bool = UNDEFINED,
         roles: List[Snowflake] = [],
-        reason: Optional[str] = UNDEFINED
+        reason: Optional[str] = UNDEFINED,
     ):
         r"""
         Edit the member.

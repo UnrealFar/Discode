@@ -4,7 +4,11 @@ from ..flags import UserFlags
 from .assets import Asset
 from .channel import DMChannel, Messageable
 
-__all__ = ("User", "ClientUser")
+__all__ = (
+    "User",
+    "ClientUser"
+    )
+
 
 class User(Messageable):
     r"""Represents a Discord User."""
@@ -63,14 +67,13 @@ class User(Messageable):
     async def create_dm(self) -> DMChannel:
         http = self._connection.http
         p = await http.request(
-            "POST",
-            "/users/@me/channels",
-            json = {"recipient_id": str(self.id)}
+            "POST", "/users/@me/channels", json={"recipient_id": str(self.id)}
         )
         p["user"] = self
         dm = DMChannel(self._connection, p)
         self.dm_channel = dm
         return dm
+
 
 class ClientUser(User):
     r"""Represents the User that is connected to the gateway."""

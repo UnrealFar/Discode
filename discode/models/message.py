@@ -1,30 +1,19 @@
-
-from typing import Dict, Any, Union
+from typing import Any, Dict, Union
 
 from .abc import BaseMessage
 from .channel import TextChannel
 from .guild import Guild
-from .user import User
 from .member import Member
+from .user import User
 
 __all__ = ("Message",)
 
+
 class Message(BaseMessage):
 
-    __slots__ = (
-        "id",
-        "content",
-        "channel_id",
-        "guild_id",
-        "author_id",
-        "_connection"
-    )
+    __slots__ = ("id", "content", "channel_id", "guild_id", "author_id", "_connection")
 
-    def __init__(
-        self,
-        connection,
-        payload: Dict[str, Any]
-    ):
+    def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
         self.id: int = int(payload.pop("id"))
         self.content: str = payload.pop("content", None)
