@@ -1,11 +1,12 @@
 import asyncio
 import json
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Sequence, Optional
 
 import aiohttp
 
 from .connection import Connection
 from .models import ClientUser, Member, Message
+from .dataclasses import Embed, File
 from .utils import UNDEFINED
 
 if TYPE_CHECKING:
@@ -25,13 +26,24 @@ class HTTP:
     def connection(self) -> Connection:
         return self.client._connection
 
-    async def request(self, method: str, url: str, **kwargs) -> Any:
+    async def request(
+        self,
+        method: str,
+        url: str,
+        form: Optional[List[Dict[str, Any]]] = UNDEFINED,
+        **kwargs
+    ) -> Any:
         url = f"{self.BASE_URL}{url}"
         headers = kwargs.pop("headers", {})
         headers["Authorization"] = f"Bot {self.client.token}"
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
             kwargs["data"] = json.dumps(kwargs.pop("json"))
+        elif form != UNDEFINED:
+            form_data = aiohttp.FormData()
+            for f in form:
+                form_data.add_field(**f)
+            kwargs["data"] = form_data
         if "reason" in kwargs:
             headers["X-Audit-Log-Reason"] = kwargs.pop("X-Audit-Log-Reason")
         kwargs["headers"] = headers
@@ -65,27 +77,59 @@ class HTTP:
         channel_id: int,
         *,
         content: str = UNDEFINED,
-        files: List = [],
-        embeds: List = [],
+        embed: Embed = UNDEFINED,
+        file: File = UNDEFINED,
+        embeds: List[Embed] = [],
+        files: List[File] = [],
     ) -> Message:
         kwargs = {}
 
         if content != UNDEFINED:
             kwargs["content"] = str(content)
 
-        if len(embeds) >= 1:
-            kwargs["embeds"] = list()
-            for embed in embeds:
-                kwargs["embeds"].append(embed.to_dict())
+        if embed != UNDEFINED:
+            kwargs["embeds"] = (embed.to_dict(),)
 
-        if len(files) == 0:
-            print(kwargs)
+        if len(embeds) > 0:
+            kwargs["embeds"] = kwargs.pop("embeds") if "embeds" in kwargs else list()
+            for emb in embeds:
+                kwargs["embeds"].append(emb.to_dict())
+
+        if len(files) == 0 and file == UNDEFINED:
             payload = await self.request(
                 "POST", f"/channels/{channel_id}/messages", json=kwargs
             )
 
         else:
-            p = {}
+            form = []
+            form.append({"name": "payload_json", "value": json.dumps(kwargs)})
+            if file:
+                files.append(file)
+            if len(files) == 1:
+                file = files[0]
+                form.append(
+                    {
+                        "name": f"file",
+                        "value": file.fp,
+                        "filename": file.filename,
+                        "content_type": "application/octet-stream"
+                    }
+                )
+            elif len(files) > 1:
+                for i, f in enumerate(files):
+                    form.append(
+                        {
+                            "name": f"file{i}",
+                            "value": f.fp,
+                            "filename": f.filename,
+                            "content_type": "application/octet-stream",
+                        }
+                    )
+            payload = await self.request(
+                "POST",
+                f"/channels/{channel_id}/messages",
+                form = form,
+            )
 
         return Message(self.connection, payload)
 

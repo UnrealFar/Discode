@@ -23,6 +23,8 @@ class Messageable(Snowflake):
         self,
         content: Optional[str] = UNDEFINED,
         *,
+        embed: Embed = UNDEFINED,
+        file: File = UNDEFINED,
         embeds: List[Embed] = [],
         files: List[File] = [],
     ) -> Message:
@@ -52,7 +54,7 @@ class Messageable(Snowflake):
             channel_id = self.id
 
         return await http.send_message(
-            channel_id, content=content, embeds=embeds, files=files
+            channel_id, content=content, embed=embed, file=file, embeds=embeds, files=files
         )
 
 

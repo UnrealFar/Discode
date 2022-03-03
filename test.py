@@ -8,7 +8,6 @@ import discode
 token = os.environ.get("BOT_TOKEN")
 
 bot = discode.Client(token=token)
-kws = "and, as, assert, async, await, break, class, continue, def, del, elif, else, except, finally, for, from, global, if, import, in, is, lambda, nonlocal, not, or, pass, raise, return, try, while, with, yield, e"
 
 
 def get_info():
@@ -81,7 +80,7 @@ async def on_message(message: discode.Message):
         except:
             error = traceback.format_exc()
             await message.channel.send(
-                embeds=(discode.Embed(title="Uh Oh!", description=f"```py\n{error}```"))
+                embed=(discode.Embed(title="Uh Oh!", description=f"```py\n{error}```"))
             )
 
 
