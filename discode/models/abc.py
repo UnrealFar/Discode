@@ -8,10 +8,7 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Snowflake",
-    "BaseMessage",
-    "Guild",
-    "Asset"
-    )
+)
 
 
 class Snowflake:
@@ -27,22 +24,9 @@ class Snowflake:
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id}>"
 
+    def _copy(self, **kwargs):
+        ret = self.__class__(self._connection, {"id": self.id})
+        for slot in self.__slots__:
+            if hasattr(self, slot):
+                setattr(ret, slot, getattr(self, slot))
 
-class BaseMessage(Snowflake):
-
-    content: str
-    channel_id: int
-
-
-class Guild(Snowflake):
-
-    name: str
-    description: str
-    icon: Asset
-    banner: Asset
-
-
-class Asset:
-
-    BASE_URL = "https://cdn.discordapp.com"
-    url: str

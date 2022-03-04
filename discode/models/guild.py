@@ -1,14 +1,15 @@
 from typing import Any, Dict, List, Union
 
-from .abc import Guild as _Guild
+from .abc import Snowflake
 from .assets import Asset
 from .channel import TextChannel
 from .member import Member
+from .role import Role
 
 __all__ = ("Guild",)
 
 
-class Guild(_Guild):
+class Guild(Snowflake):
     r"""
     Represents a Discord Guild.
 
@@ -37,17 +38,20 @@ class Guild(_Guild):
         self.name: str = payload.pop("name", None)
         self._icon: str = payload.pop("icon", None)
         self._members: Dict[int, Member] = {}
-        for m in payload.pop("members", []):
+        for m in payload.pop("members", tuple()):
             m["guild_id"] = self.id
             mem = Member(connection, m)
             self._add_member(mem)
         self._channels: Dict = {}
-        for c in payload.pop("channels", []):
+        for c in payload.pop("channels", tuple()):
             c["guild"] = self
             if c["type"] == 0:
                 ch = TextChannel(connection, c)
                 self._add_channel(ch)
         self._roles: Dict = {}
+        for r in payload.pop("roles", tuple()):
+            role = Role(connection, r)
+            self._add_role(role)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id} name = { self.name,}>"
@@ -97,7 +101,7 @@ class Guild(_Guild):
         self._channels.pop(channel.id, None)
 
     @property
-    def roles(self) -> List[Dict[str, Any]]:
+    def roles(self) -> List[Role]:
         return [r for r in getattr(self, "_roles", {}).values()]
 
     def _add_role(self, role):

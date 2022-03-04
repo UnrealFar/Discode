@@ -1,6 +1,6 @@
 from typing import Any, Dict, Union
 
-from .abc import BaseMessage
+from .abc import Snowflake
 from .channel import TextChannel
 from .guild import Guild
 from .member import Member
@@ -9,7 +9,7 @@ from .user import User
 __all__ = ("Message",)
 
 
-class Message(BaseMessage):
+class Message(Snowflake):
 
     __slots__ = ("id", "content", "channel_id", "guild_id", "author_id", "_connection")
 

@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from .abc import Asset as _Asset
+from .abc import Snowflake
 
 __all__ = ("Asset",)
 
 
-class Asset(_Asset):
+class Asset(Snowflake):
     r"""
     Represents a Discord Asset. An asset can be either of the following: `user avatar`, `user banner`, `guild icon`, `guild banner`.
     """
+    BASE_URL = "https://cdn.discordapp.com"
 
     __slots__ = ("_url", "_key", "_animated", "_connection")
 
