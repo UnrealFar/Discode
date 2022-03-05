@@ -13,6 +13,9 @@ bot = discode.Client(token=token)
 def get_info():
     return f"Intents: {bot.intents}\nLatency: {round(bot.latency * 1000, 2)}ms\nGuilds: {len(bot.guilds)}\nUsers: {len(bot.users)}\n{bot.user} is ready!"
 
+@discode.utils.async_function
+def pront(*args):
+    return print(*args)
 
 @bot.on_event(discode.GatewayEvent.READY)
 async def on_ready():
@@ -21,7 +24,7 @@ async def on_ready():
 
 @bot.on_event(discode.GatewayEvent.MESSAGE_CREATE)
 async def on_message(message: discode.Message):
-    print(message.author, ":", message)
+    await pront(message.author, ":", message)
     msg = message.content
 
     if msg.startswith("d!hi"):

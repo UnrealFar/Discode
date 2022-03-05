@@ -7,6 +7,7 @@ from typing import (
 
 from .abc import Snowflake
 from ..flags import Permissions
+from ..utils import UNDEFINED
 
 class Role(Snowflake):
     r"""Represents a Discord role.__all__
@@ -24,12 +25,12 @@ class Role(Snowflake):
 
     def __init__(self, connection, payload):
         self._connection = connection
-        self.id = int(payload.pop("id"))
+        self.id = int(payload.pop("id", UNDEFINED))
         self.name = payload.pop("name", None)
         self.colour = payload.pop("color", 0)
         self.hoist = payload.pop("hoist", False)
         self.position = payload.pop("position", None)
-        self.permissions = Permissions(payload.pop("permissions", 0))
+        self.permissions = Permissions(int(payload.pop("permissions", UNDEFINED)))
 
     @property
     def mention(self) -> str:

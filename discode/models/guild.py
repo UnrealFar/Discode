@@ -5,6 +5,7 @@ from .assets import Asset
 from .channel import TextChannel
 from .member import Member
 from .role import Role
+from ..utils import UNDEFINED
 
 __all__ = ("Guild",)
 
@@ -34,7 +35,7 @@ class Guild(Snowflake):
 
     def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
-        self.id: int = int(payload.pop("id"))
+        self.id: int = int(payload.pop("id", UNDEFINED))
         self.name: str = payload.pop("name", None)
         self._icon: str = payload.pop("icon", None)
         self._members: Dict[int, Member] = {}
@@ -54,7 +55,7 @@ class Guild(Snowflake):
             self._add_role(role)
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} id = {self.id} name = { self.name,}>"
+        return f"<{self.__class__.__name__} id = {self.id} name = { self.name}>"
 
     @property
     def me(self) -> Member:
