@@ -17,7 +17,29 @@ from .models import ClientUser, DMChannel, Guild, Message, TextChannel, User
 
 class Client:
 
-    r"""Represents the Client that connects to the Discord Gateway and HTTP Api."""
+    r"""
+    Represents the Client that connects to the Discord Gateway and HTTP Api.
+
+    Parameters
+    ----------
+
+    token: :class:`str`
+        The token to use to communicate with the gateway and REST APIs.
+    intents: :class:`Intents`
+        The intents to use while connecting to the gateway. Defaults to :meth:`Intents.all()`.
+    loop: :class:`asyncio.AbstractEventLoop`
+        The event loop the client should use for asynchronous operations.
+
+    Attributes
+    ----------
+
+    token: :class:`str`
+        The token used to connect to the REST & gateway APIs.
+    intents: :class:`Intents`
+        The intents the client is using.
+    loop: :class:`asyncio.AbstractEventLoop`
+        The event loop used by the client for asynchronous operations.
+    """
 
     def __init__(
         self,

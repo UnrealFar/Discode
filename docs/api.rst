@@ -35,7 +35,7 @@ Event Reference
 
 Discode allows users to listen for dispatch events received thru the gateway. All events must be registered in the following format:
 
-.. code-block:: py
+.. code-block:: python3
 
     @client.on_event(discode.GatewayEvent.READY)
     async def on_ready():
@@ -46,6 +46,13 @@ See :class:`GatewayEvent` for more information on dispatch events.
 .. autoclass:: GatewayEvent
     :members:
     :undoc-members:
+
+Utilities
+---------
+Discode provides a wide range of utilities for making developing Discord bots, and Discord related projects for developers. These are some of the documented utilities.
+
+.. automodule:: discode.utils
+    :members:
 
 Models
 --------

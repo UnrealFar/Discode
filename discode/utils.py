@@ -53,14 +53,28 @@ def invite_url(
         ret += f"&permissions={int(permissions)}"
     return ret
 
+def decorator(func: Callable):
+    func._is_decorator = True
+    return func
 
+@decorator
 def async_function(sync_function: Callable):
     r"""Decorator to make synchronous function asynchronous. Useful with modules like Pillow, which have a synchronous backend but are extremely useful in image manipulation.
+
+    Usage of this decorator is equivalant to:
+
+    .. code-block:: py
+
+        # inside coroutine:
+        await asyncio.get_event_loop.run_in_executor(
+            None,
+            functools.partial(sync_function, *args, **kwargs)
+        )
 
     Example
     --------
 
-    .. codeblock:: python3
+    .. code-block:: py
 
         @discode.utils.async_function
         def sync_function(msg: discode.Message):
@@ -84,7 +98,19 @@ def async_function(sync_function: Callable):
 
 
 def escape_markdown(text: str):
-    r"""Get rid of Discord markdown from given text.
+    r"""Get rid of Discord markdown highlighting from given text.
+
+    Parameters
+    ----------
+
+    text: :class:`str`
+        The text to get freed from markdown highlighting in Discord.
+
+    Returns
+    -------
+
+    :class:`str`
+        Text passed in text parameter freed from Discord markdown highlighting. 
     """
     return text.replace("*", "\*").replace("_", "\_").replace("`", "\`").replace("|", "\|").replace("~", "\~").replace(">", "\>")
 
