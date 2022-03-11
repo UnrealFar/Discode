@@ -24,6 +24,9 @@ def worker(app: Sphinx, docname: str, source: list):
             "disallow": [
                 "Messageable",
             ],
+            "allowed_enums": [
+                "ButtonStyle",
+            ],
             "LINE_SEP": "\n",
         },
     )

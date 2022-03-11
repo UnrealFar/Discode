@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 class Embed:
     r"""Represents a Discord Embed.
 
-    Attrbutes
+    Attributes
     ----------
 
     title: str

@@ -35,7 +35,7 @@ Event Reference
 
 Discode allows users to listen for dispatch events received thru the gateway. All events must be registered in the following format:
 
-.. code-block:: python3
+.. code-block:: python
 
     @client.on_event(discode.GatewayEvent.READY)
     async def on_ready():
@@ -46,6 +46,26 @@ See :class:`GatewayEvent` for more information on dispatch events.
 .. autoclass:: GatewayEvent
     :members:
     :undoc-members:
+
+Enumerations
+-------------
+This section describes in detail all the available enumerations Discode Provides.
+
+{% for object in dir(discode.enums) %}
+    {% set cls = getattr(discode.enums, object, None) %}
+    {% set cls_name = getattr(cls, "__name__", "") %}
+
+    {% if cls is callable and cls_name in allowed_enums %}
+
+{{ cls_name }}
+{{ "~" * cls_name|length() }}
+
+.. autoclass:: discode.{{ cls_name }}
+    :members:
+    :undoc-members:
+
+    {% endif %}
+{% endfor %}
 
 Utilities
 ---------

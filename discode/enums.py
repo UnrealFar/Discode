@@ -21,3 +21,21 @@ class GatewayEvent:
     r"Dispatched when the client gets removed from a guild, or the guild itself gets deleted by the owner. This event takes 1 parameter- 'guild'"
     MESSAGE_CREATE = "message_create"
     r"Dispatched when a user / bot sends a message. This event takes 1 parameter- 'message'"
+
+class ButtonStyle:
+    r"""Buttons come in a variety of styles to convey different types of actions. These styles also define what fields are valid for a button.
+
+    .. image:: docs/media/button_styles.png
+
+    """
+
+    primary: int = 1
+    secondary: int = 2
+    success: int = 3
+    danger: int = 4
+    link: int = 5
+    blurple: int = primary
+    grey: int = secondary
+    green: int = success
+    red: int = danger
+    url: int = link

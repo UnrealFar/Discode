@@ -27,7 +27,7 @@ class Message(Snowflake):
         return f"<{self.__class__.__name__} id = {self.id} content = {self.content}"
 
     def __str__(self) -> str:
-        return self.content
+        return self.content or ""
 
     @property
     def author(self) -> Union[User, Member]:

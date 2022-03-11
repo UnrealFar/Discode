@@ -6,12 +6,15 @@ import functools
 
 from typing import (
     Any,
+    Union,
     Iterable,
     Callable,
     final,
     TYPE_CHECKING,
 )
 
+if TYPE_CHECKING:
+    from .flags import Permissions
 
 @final
 class _UNDEFINED:
@@ -41,9 +44,9 @@ UNDEFINED: Any = _UNDEFINED()
 def invite_url(
     client_id,
     *,
-    permissions: int = UNDEFINED,
-    scopes: Iterable[str] = UNDEFINED,
-    redirect_uri: str = UNDEFINED,
+    permissions: Union[Permissions, int]=UNDEFINED,
+    scopes: Iterable[str]=UNDEFINED,
+    redirect_uri: str=UNDEFINED,
 ) -> str:
     r"""Generates an invite url based on the given parameters for the client.
     """

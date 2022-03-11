@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, List, Optional, Union, overload
 
 if TYPE_CHECKING:
     from ..connection import Connection
+    from ..utils import UNDEFINED
 
 __all__ = (
     "Snowflake",
@@ -19,7 +20,7 @@ class Snowflake:
         _connection: Connection
 
     def __init__(self, connection: Connection, payload: dict):
-        ...
+        self.id = payload.pop(id, UNDEFINED)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id}>"
