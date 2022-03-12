@@ -99,6 +99,17 @@ def async_function(sync_function: Callable):
         return loop.run_in_executor(None, partial)
     return wrapper
 
+@async_function
+def run_async(func, *args, **kwargs):
+    r"""Run a function asynchronously and wait for it to complete.
+
+    Returns
+    -------
+
+    Any
+        The return value of the function.
+    """
+    return func(*args, **kwargs)
 
 def escape_markdown(text: str):
     r"""Get rid of Discord markdown highlighting from given text.

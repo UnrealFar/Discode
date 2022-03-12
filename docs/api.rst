@@ -27,8 +27,15 @@ Client
 ~~~~~~~
 The base client to use to connect to the api and receive events.
 
+.. attributetable:: Client
+
 .. autoclass :: Client
     :members:
+    :undoc-members:
+    :inherited-members:
+    :exclude-members: on_event
+
+    .. autodecorator:: discode.Client.on_event(event)
 
 Event Reference
 ----------------
@@ -73,9 +80,12 @@ Discode provides a wide range of utilities for making developing Discord bots, a
 
 .. automodule:: discode.utils
     :members:
+    :exclude-members: async_function
+
+.. autodecorator:: discode.utils.async_function
 
 Models
---------
+------
 
 {% for object in dir(discode.models) %}
    {% set cls = getattr(discode.models, object, None) %}

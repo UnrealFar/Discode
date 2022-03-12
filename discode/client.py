@@ -1,10 +1,13 @@
-import asyncio
 
-import aiohttp
+from __future__ import annotations
 
 __all__ = ("Client",)
 
 from typing import Any, Dict, List, Optional, Union
+
+import asyncio
+import aiohttp
+import functools
 
 from . import utils
 from .connection import Connection
@@ -96,13 +99,15 @@ class Client:
     def session(self) -> aiohttp.ClientSession:
         return self._http._session
 
-    async def run_task(self, **kwargs):
+    async def run_task(self, *args, **kwargs):
         self._user = await self._http.login()
         ws_options = kwargs.pop("ws_options", {})
         self._ws: Gateway = Gateway(self)
         await self._ws.connect(**ws_options)
 
     def run(self, *args, **kwargs):
+        r"""The :meth:`Client.run()` is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine. The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive.
+        """
         loop = self.loop
 
         async def runner():
@@ -126,12 +131,27 @@ class Client:
         await self._http.close()
 
     def on_event(self, event: Union[str, GatewayEvent]):
+        r"""Decorator to register event listeners to the client. The function decorated must be a coroutine. This decorator uses :meth:`Client.add_listener()` to register the listener.
+
+        Parameters
+        ----------
+
+        event: :class:`str`
+            The event the listener should be registered for.
+        Raises
+        ------
+
+        TypeError
+            The function decorated isn't a coroutine.
+        """
+
         def wrapper(func):
             if not asyncio.iscoroutinefunction(func):
                 raise TypeError(
                     f"Couldn't register {func} as a listener as it was of type {type(func)} and the library expected a coroutine!"
                 )
             self.add_listener(func, event)
+            return func
 
         return wrapper
 

@@ -1,17 +1,18 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, List
 
 from .abc import Snowflake
 from .channel import TextChannel
 from .guild import Guild
 from .member import Member
 from .user import User
+from ..app import Button, LinkButton, component_from_dict
 
 __all__ = ("Message",)
 
 
 class Message(Snowflake):
 
-    __slots__ = ("id", "content", "channel_id", "guild_id", "author_id", "_connection")
+    __slots__ = ("id", "content", "channel_id", "guild_id", "author_id", "_components", "_connection")
 
     def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
@@ -21,6 +22,7 @@ class Message(Snowflake):
         g_id = payload.pop("guild_id", None)
         self.guild_id: int = int(g_id) if g_id else None
         self.author_id: int = int(payload.pop("author").get("id", 0))
+        self._components: List[Union[Button, LinkButton]] = [component_from_dict(comp) for comp in payload.pop("components", ())]
         del payload
 
     def __repr__(self) -> str:
@@ -43,3 +45,7 @@ class Message(Snowflake):
     @property
     def guild(self) -> Guild:
         return self._connection.get_guild(self.guild_id)
+
+    @property
+    def components(self) -> List[Union[Button, LinkButton]]:
+        return self._components.copy()

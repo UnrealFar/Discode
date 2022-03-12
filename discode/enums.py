@@ -25,8 +25,6 @@ class GatewayEvent:
 class ButtonStyle:
     r"""Buttons come in a variety of styles to convey different types of actions. These styles also define what fields are valid for a button.
 
-    .. image:: docs/media/button_styles.png
-
     """
 
     primary: int = 1
