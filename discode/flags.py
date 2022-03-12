@@ -186,5 +186,5 @@ class UserFlags(Flags):
     bug_hunter_level_2 = 1 << 14
     verified_bot = 1 << 16
     verified_developer = 1 << 17
-    certified_developer = 1 << 18
+    certified_moderator = 1 << 18
     bot_http_interactions = 1 << 19
