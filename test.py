@@ -25,7 +25,7 @@ def pront(*args):
 @bot.on_event(discode.GatewayEvent.READY)
 async def on_ready():
     print(get_info())
-    print(client.user, "is ready!")
+    print(bot.user, "is ready!")
 
 @bot.on_event(discode.GatewayEvent.MESSAGE_CREATE)
 async def on_message(message: discode.Message):
