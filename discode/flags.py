@@ -12,6 +12,10 @@ class Flags:
 
     def __init__(self, value: int = 0, **flags):
         self.value: int = value
+        for flag, toggle in flags.items():
+            if flag not in self.__items__:
+                raise TypeError(f"{flag} is not a valid flag for {self.__class__.__name__}")
+            self._apply(flag, toggle)
 
     def _apply(self, flag: str, toggle: bool):
         value = self.__items__[flag]
@@ -27,10 +31,16 @@ class Flags:
         items = dict()
 
         for k, v in vars(cls).items():
-            if not k.startswith("_"):
+            if (k.startswith("_")) or (not isinstance(v, int)):
+                continue
+            else:
                 items[k] = v
+                setattr(cls, k, Flag(k, v))
 
         cls.__items__ = items
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} value={self.value}>"
 
     def __int__(self) -> int:
         return self.value
@@ -107,20 +117,10 @@ class Intents(Flags):
     direct_messages_typing = 1 << 14
     guild_scheduled_events = 1 << 16
 
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} value={self.value}>"
 
     @classmethod
     def all(cls) -> Intents:
-        return cls(
-            sum(
-                (
-                    v
-                    for k, v in cls.__items__.items()
-                    if (isinstance(v, int) and k != "value")
-                )
-            )
-        )
+        return cls(**{k: True for k in cls.__items__})
 
     @classmethod
     def unprivileged(cls) -> Intents:
@@ -135,7 +135,6 @@ class Intents(Flags):
         ret = cls.unprivileged()
         ret.guild_messages = True
         return ret
-
 
 class Permissions(Flags):
     create_instant_invite = 1 << 0

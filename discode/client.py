@@ -4,18 +4,19 @@ __all__ = ("Client",)
 
 import asyncio
 import functools
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Union, TypeVar
 
 import aiohttp
 
 from . import utils
 from .connection import Connection
 from .enums import GatewayEvent
-from .flags import Intents
+from .flags import Intents, Permissions
 from .gateway import Gateway
 from .http import HTTP
 from .models import ClientUser, DMChannel, Guild, Message, TextChannel, User
 
+Coro = TypeVar("Coro", bound = Callable[..., Coroutine[Any, Any, Any]])
 
 class Client:
 
@@ -63,39 +64,47 @@ class Client:
 
     @property
     def latency(self) -> float:
-        r""""""
+        r""":class:`float`: The latency of the websocket connection."""
         return self._ws.latency
 
     @property
     def user(self) -> ClientUser:
-        return self._user
+        r""":class:`ClientUser`: The user object belonnging to the client."""
+        return getattr(self, "_user", None)
 
     @property
     def users(self) -> List[User]:
+        r"""List[:class:`User`]: A list of all the users the client can see."""
         return list(self._connection.user_cache.values())
 
     @property
     def guilds(self) -> List[Guild]:
+        r"""List[:class:`Guild`]: A list of all the guilds visible to the client."""
         return list(self._connection.guild_cache.values())
 
     @property
     def messages(self) -> List[Message]:
+        r"""List[:class:`Message`]: A list of all the messages cached by the client."""
         return list(self._connection.message_cache.values())
 
     @property
     def channels(self) -> List[Union[TextChannel, DMChannel]]:
+        r"""List[Union[:class:`TextChannel`, :class:`DMChannel`]]: A list of all the channels cached by the client."""
         return list(self._connection.channel_cache.values())
 
     @property
     def dm_channels(self) -> List[DMChannel]:
+        r"""List[:class:`DMChannel`]: A list of all the direct message channels cached by the client."""
         return [c for c in self._connection.channel_cache.values() if c.type == 1]
 
     @property
     def invite_url(self) -> str:
-        return utils.invite_url(client_id=self.user.id)
+        r""":class:`str`: Generates an invite url forr the client and returns it."""
+        return utils.invite_url(client_id=self.user.id, permissions = Permissions(administrator = True))
 
     @property
     def session(self) -> aiohttp.ClientSession:
+        r""":class:`aiohttp.ClientSession`: The client session used by the http client for making requests to the Discord API."""
         return self._http._session
 
     async def run_task(self, *args, **kwargs):
@@ -105,7 +114,10 @@ class Client:
         await self._ws.connect(**ws_options)
 
     def run(self, *args, **kwargs):
-        r"""The :meth:`Client.run()` is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine. The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive."""
+        r"""The :meth:`Client.run()` is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine. The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive.
+
+        .. warning:: Code written after this function is called will most probably not get executed till the bot stops.
+        """
         loop = self.loop
 
         async def runner():
@@ -124,11 +136,21 @@ class Client:
         finally:
             future.remove_done_callback(stop)
 
-    async def close(self):
+    async def close(self) -> None:
+        r"""Closes the client, the http client, and the gateway connection.
+        """
         await self._http.logout()
         await self._http.close()
+        for task in asyncio.all_tasks():
+            try:
+                task.cancel()
+            except:
+                pass
+        for listener in self._ws.handler.dispatch_listeners:
+            fut = listener.future
+            fut.cancel()
 
-    def on_event(self, event: Union[str, GatewayEvent]):
+    def on_event(self, event: Union[str, GatewayEvent]) -> Coro:
         r"""Decorator to register event listeners to the client. The function decorated must be a coroutine. This decorator uses :meth:`Client.add_listener()` to register the listener.
 
         Parameters
@@ -143,7 +165,7 @@ class Client:
             The function decorated isn't a coroutine.
         """
 
-        def wrapper(func):
+        def wrapper(func: Coro):
             if not asyncio.iscoroutinefunction(func):
                 raise TypeError(
                     f"Couldn't register {func} as a listener as it was of type {type(func)} and the library expected a coroutine!"
@@ -153,13 +175,36 @@ class Client:
 
         return wrapper
 
-    def add_listener(self, coro, event):
+    def add_listener(self, coro: Coro, event: str):
+        r"""This function registers a listener to the client.
+
+        Parameters
+        ----------
+
+        coro: :class:`Coro`
+            A callable coroutine.
+        event: :class:`str`
+            The event to which the listener should be registered to. This event must be a valid event documented under :class:`GatewayEvent`.
+
+        Returns
+        -------
+        :class:`Coro`
+            The coroutine passed in as a parameter.
+
+        Raises
+        ------
+        TypeError
+            The coro passed in parameters isn't a coroutine. 
+        """
         if event not in vars(GatewayEvent).values():
             raise Exception(f"Invalid Listener: {event}")
+        if not asyncio.iscoroutinefunction(coro):
+            raise TypeError(f"Couldn't register {coro} as a listener as it was of type {type(coro)} and the library expected a coroutine!")
         if event in self._listeners:
             self._listeners.append(coro)
         else:
             self._listeners[event] = [coro]
+        return coro
 
     async def dispatch(self, event, *args, **kwargs):
         ev = getattr(self, f"on_{event}", None)
@@ -169,15 +214,29 @@ class Client:
         for l in listeners:
             self.loop.create_task(l(*args, **kwargs))
 
-    async def wait_for(self, event, check, *, timeout=30):
+    async def wait_for(
+        self,
+        event: str,
+        check: Union[Callable[..., Any], Coro],
+        *,
+        timeout=30,
+    ):
+        r"""Waits for a dispatch event from the websocket.
+
+        This method can be used to wait for a user to send a message that matches the passed check.
+
+        Parameters
+        ----------
+        event: :class:`str`
+            The event to wait for. Must be a valid event documented under :class:`GatewayEvent`.
+        check: Union[Callable[True], Coro]
+            The check that should be run on the event. Can either be a normal function or a coroutine, with valid parameters specified under :class:`GatewayEvent`.
+        """
+        event = event.lower()
         listener = self._ws.wait_for(event, check)
         fut = listener.future
         try:
             return await asyncio.wait_for(fut, timeout=timeout)
         except asyncio.TimeoutError as exc:
             fut.cancel()
-            try:
-                del listener
-            except:
-                pass
             raise exc

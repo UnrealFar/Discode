@@ -15,6 +15,13 @@ __all__ = ("Member",)
 
 class Member(User):
 
+    if TYPE_CHECKING:
+        id: int
+        name: str
+        discriminator: str
+        guild: Guild
+        user: User
+
     __slots__ = (
         "id",
         "_user",
@@ -36,13 +43,13 @@ class Member(User):
         self.guild_id = payload.pop("guild_id", None)
         user = payload.pop("user", {})
         uid = user.get("id")
-        self._user: User = connection.get_user(uid)
+        self._user = connection.get_user(uid)
         if not self._user:
-            self._user: User = User(connection, user)
+            self._user = User(connection, user)
             connection.add_user(self._user)
-        self.id: int = self._user.id
-        self.name: str = self._user.name
-        self.discriminator: str = self._user.discriminator
+        self.id = self._user.id
+        self.name = self._user.name
+        self.discriminator  = self._user.discriminator
         self.nick: str = payload.pop("nick", None)
         self.joined_at = None
         self.premium_since = None
@@ -73,6 +80,10 @@ class Member(User):
     def guild(self):
         r""":class:`Guild`: The guild to which the member is attached to."""
         return self._connection.get_guild(self.guild_id)
+
+    @property
+    def user(self):
+        return self._user
 
     async def edit(
         self,
