@@ -13,7 +13,8 @@ bot = discode.Client(token=token)
 
 
 def get_info():
-    return f"Intents: {bot.intents}\nLatency: {round(bot.latency * 1000, 2)}ms\nGuilds: {len(bot.guilds)}\nUsers: {len(bot.users)}\n{bot.user} is ready!"
+    ret = f"Intents: {bot.intents.value}\nLatency: {round(bot.latency * 1000, 2)}ms\nGuilds: {len(bot.guilds)}\nUsers: {len(bot.users)}"
+    return ret
 
 
 @discode.utils.async_function
@@ -24,7 +25,7 @@ def pront(*args):
 @bot.on_event(discode.GatewayEvent.READY)
 async def on_ready():
     print(get_info())
-
+    print(client.user, "is ready!")
 
 @bot.on_event(discode.GatewayEvent.MESSAGE_CREATE)
 async def on_message(message: discode.Message):
@@ -86,7 +87,8 @@ async def on_message(message: discode.Message):
             error = traceback.format_exc()
             await message.channel.send(
                 embed=discode.Embed(
-                    title="Uh Oh!", description=f"```py\n{error}```",
+                    title="Uh Oh!",
+                    description=f"```py\n{error}```",
                 )
             )
 
