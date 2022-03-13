@@ -1,11 +1,13 @@
 import asyncio
-import os
 import textwrap
 import traceback
+import json
 
 import discode
 
-token = os.environ.get("BOT_TOKEN")
+with open("env.json", "r") as env_file:
+    env = json.load(env_file)
+    token = env.get("BOT_TOKEN")
 
 bot = discode.Client(token=token)
 
