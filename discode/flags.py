@@ -114,7 +114,7 @@ class Intents(Flags):
     guild_typing = 1 << 11
     direct_messages = 1 << 12
     direct_messages_reactions = 1 << 13
-    direct_messages_typing = 1 << 
+    direct_messages_typing = 1 << 14
     message_content = 1 << 15
     guild_scheduled_events = 1 << 16
 
