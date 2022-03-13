@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Union
 
+from ..utils import UNDEFINED
 from .abc import Snowflake
 from .assets import Asset
 from .channel import TextChannel
 from .member import Member
 from .role import Role
-from ..utils import UNDEFINED
 
 __all__ = ("Guild",)
 

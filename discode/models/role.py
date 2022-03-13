@@ -1,19 +1,14 @@
-
 __all__ = ("Role",)
 
-from typing import (
-    TYPE_CHECKING,
-)
+from typing import TYPE_CHECKING
 
-from .abc import Snowflake
 from ..flags import Permissions
 from ..utils import UNDEFINED
+from .abc import Snowflake
+
 
 class Role(Snowflake):
-    r"""Represents a Discord role.__all__
-
-    
-    """
+    r"""Represents a Discord role.__all__"""
 
     if TYPE_CHECKING:
         id: int

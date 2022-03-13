@@ -1,3 +1,33 @@
+r"""
+Discode
+-------
+
+Discode is an asynchronous API wrapper for the Discord API.
+It provides all necessary functionalities needed to interact with Discord bot developing and other functions of the API. It also provides utilities to make coding with Discode much easier.
+"""
+
+__all__ = (
+    "Client",
+    "Embed",
+    "File",
+    "GatewayEvent",
+    "ButtonStyle",
+    "Intents",
+    "Permissions",
+    "UserFlags",
+    "Snowflake",
+    "Asset",
+    "TextChannel",
+    "DMChannel",
+    "Guild",
+    "Member",
+    "Message",
+    "Role",
+    "User",
+    "Button",
+    "LinkButton",
+)
+
 import asyncio
 import platform
 
@@ -26,5 +56,6 @@ from .dataclasses import *
 from .enums import *
 from .flags import *
 from .models import *
+from .app import *
 
 __version__ = "2.0.0b2"

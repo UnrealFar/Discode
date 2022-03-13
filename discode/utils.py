@@ -1,20 +1,12 @@
-
 from __future__ import annotations
 
 import asyncio
 import functools
-
-from typing import (
-    Any,
-    Union,
-    Iterable,
-    Callable,
-    final,
-    TYPE_CHECKING,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Union, final
 
 if TYPE_CHECKING:
     from .flags import Permissions
+
 
 @final
 class _UNDEFINED:
@@ -44,21 +36,22 @@ UNDEFINED: Any = _UNDEFINED()
 def invite_url(
     client_id,
     *,
-    permissions: Union[Permissions, int]=UNDEFINED,
-    scopes: Iterable[str]=UNDEFINED,
-    redirect_uri: str=UNDEFINED,
+    permissions: Union[Permissions, int] = UNDEFINED,
+    scopes: Iterable[str] = UNDEFINED,
+    redirect_uri: str = UNDEFINED,
 ) -> str:
-    r"""Generates an invite url based on the given parameters for the client.
-    """
+    r"""Generates an invite url based on the given parameters for the client."""
     ret = f"https://discord.com/oauth2/authorize?client_id={client_id}"
     ret += "&scope=" + "".join(scopes or ("bot",))
     if permissions:
         ret += f"&permissions={int(permissions)}"
     return ret
 
+
 def decorator(func: Callable):
     func._is_decorator = True
     return func
+
 
 @decorator
 def async_function(sync_function: Callable):
@@ -92,12 +85,13 @@ def async_function(sync_function: Callable):
 
     @functools.wraps(sync_function)
     async def wrapper(*args, **kwargs):
-        r"""Internal wrapper to run code asynchronously.
-        """
+        r"""Internal wrapper to run code asynchronously."""
         partial = functools.partial(sync_function, *args, **kwargs)
         loop = asyncio.get_event_loop()
         return loop.run_in_executor(None, partial)
+
     return wrapper
+
 
 @async_function
 def run_async(func, *args, **kwargs):
@@ -110,6 +104,7 @@ def run_async(func, *args, **kwargs):
         The return value of the function.
     """
     return func(*args, **kwargs)
+
 
 def escape_markdown(text: str):
     r"""Get rid of Discord markdown highlighting from given text.
@@ -124,8 +119,13 @@ def escape_markdown(text: str):
     -------
 
     :class:`str`
-        Text passed in text parameter freed from Discord markdown highlighting. 
+        Text passed in text parameter freed from Discord markdown highlighting.
     """
-    return text.replace("*", "\*").replace("_", "\_").replace("`", "\`").replace("|", "\|").replace("~", "\~").replace(">", "\>")
-
-
+    return (
+        text.replace("*", "\*")
+        .replace("_", "\_")
+        .replace("`", "\`")
+        .replace("|", "\|")
+        .replace("~", "\~")
+        .replace(">", "\>")
+    )

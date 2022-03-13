@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 __all__ = (
@@ -8,21 +7,14 @@ __all__ = (
     "component_from_dict",
 )
 
-from typing import (
-    Optional,
-    Union,
-    Any,
-    Dict,
-    Callable,
-    Awaitable,
-    TYPE_CHECKING,
-)
-
-import os
 import asyncio
+import os
+from typing import (TYPE_CHECKING, Any, Awaitable, Callable, Dict, Optional,
+                    Union)
 
-from ..utils import UNDEFINED
 from ..enums import ButtonStyle
+from ..utils import UNDEFINED
+
 
 class Button:
 
@@ -62,7 +54,9 @@ class Button:
         self.custom_id = custom_id
         self.disabled = disabled
         if style == ButtonStyle.link:
-            raise ValueError("URL/link buttons should be subclassed from class discode.models.components.LinkButton")
+            raise ValueError(
+                "URL/link buttons should be subclassed from class discode.models.components.LinkButton"
+            )
         self.style = int(style) if style != UNDEFINED else ButtonStyle.primary
 
     def __bool__(self) -> bool:
@@ -73,26 +67,19 @@ class Button:
             return await self.callback()
 
     @classmethod
-    def from_dict(
-        cls: Button,
-        payload: Dict[str, Any]
-    ):
+    def from_dict(cls: Button, payload: Dict[str, Any]):
         button = cls(
-            label = payload.get("label", UNDEFINED),
-            style = payload.get("style", UNDEFINED),
-            custom_id = payload.get("custom_id", UNDEFINED),
-            disabled = payload.get("disabled", False),
+            label=payload.get("label", UNDEFINED),
+            style=payload.get("style", UNDEFINED),
+            custom_id=payload.get("custom_id", UNDEFINED),
+            disabled=payload.get("disabled", False),
         )
         return button
 
+
 class LinkButton(Button):
 
-    __slots__ = (
-        "type",
-        "style",
-        "label",
-        "url"
-    )
+    __slots__ = ("type", "style", "label", "url")
 
     if TYPE_CHECKING:
         type: int
@@ -112,21 +99,18 @@ class LinkButton(Button):
         self.url = str(url)
 
     @classmethod
-    def from_dict(
-        cls: LinkButton,
-        payload: Dict[str, Any]
-    ):
+    def from_dict(cls: LinkButton, payload: Dict[str, Any]):
         button = cls(
-            label = payload.get("label", UNDEFINED),
-            url = payload.get("url", UNDEFINED)
+            label=payload.get("label", UNDEFINED), url=payload.get("url", UNDEFINED)
         )
         return button
 
+
 URLButton = LinkButton
+
 
 def component_from_dict(payload: Dict[str, Any]):
     if payload.get("type") == 2:
         if payload.get("style") == ButtonStyle.link:
             return LinkButton.from_dict(payload)
         return Button.from_dict(payload)
-

@@ -22,10 +22,9 @@ class GatewayEvent:
     MESSAGE_CREATE = "message_create"
     r"Dispatched when a user / bot sends a message. This event takes 1 parameter- 'message'"
 
-class ButtonStyle:
-    r"""Buttons come in a variety of styles to convey different types of actions. These styles also define what fields are valid for a button.
 
-    """
+class ButtonStyle:
+    r"""Buttons come in a variety of styles to convey different types of actions. These styles also define what fields are valid for a button."""
 
     primary: int = 1
     secondary: int = 2

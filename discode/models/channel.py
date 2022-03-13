@@ -12,10 +12,7 @@ from ..dataclasses import Embed, File
 from ..utils import UNDEFINED
 from .abc import Snowflake
 
-__all__ = (
-    "TextChannel",
-    "DMChannel"
-    )
+__all__ = ("TextChannel", "DMChannel")
 
 
 class Messageable(Snowflake):
@@ -54,7 +51,12 @@ class Messageable(Snowflake):
             channel_id = self.id
 
         return await http.send_message(
-            channel_id, content=content, embed=embed, file=file, embeds=embeds, files=files
+            channel_id,
+            content=content,
+            embed=embed,
+            file=file,
+            embeds=embeds,
+            files=files,
         )
 
 

@@ -4,10 +4,7 @@ from ..flags import UserFlags
 from .assets import Asset
 from .channel import DMChannel, Messageable
 
-__all__ = (
-    "User",
-    "ClientUser"
-    )
+__all__ = ("User", "ClientUser")
 
 
 class User(Messageable):

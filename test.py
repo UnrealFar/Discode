@@ -13,9 +13,11 @@ bot = discode.Client(token=token)
 def get_info():
     return f"Intents: {bot.intents}\nLatency: {round(bot.latency * 1000, 2)}ms\nGuilds: {len(bot.guilds)}\nUsers: {len(bot.users)}\n{bot.user} is ready!"
 
+
 @discode.utils.async_function
 def pront(*args):
     return print(*args)
+
 
 @bot.on_event(discode.GatewayEvent.READY)
 async def on_ready():
@@ -58,15 +60,13 @@ async def on_message(message: discode.Message):
         try:
             data = msg[6:]
             args = {
-                "discode": discode,
+                **globals(),
                 "message": message,
                 "author": message.author,
                 "channel": message.channel,
                 "guild": message.guild,
-                "bot": bot,
                 "client": bot,
                 "imp": __import__,
-                **globals(),
             }
             data = data.replace("return", "yield").replace("”", '"').replace("“", '"')
             if data.startswith(" "):
@@ -83,7 +83,9 @@ async def on_message(message: discode.Message):
         except:
             error = traceback.format_exc()
             await message.channel.send(
-                embed=(discode.Embed(title="Uh Oh!", description=f"```py\n{error}```"))
+                embed=discode.Embed(
+                    title="Uh Oh!", description=f"```py\n{error}```",
+                )
             )
 
 

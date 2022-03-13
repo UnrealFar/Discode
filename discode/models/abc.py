@@ -7,9 +7,7 @@ if TYPE_CHECKING:
     from ..connection import Connection
     from ..utils import UNDEFINED
 
-__all__ = (
-    "Snowflake",
-)
+__all__ = ("Snowflake",)
 
 
 class Snowflake:
@@ -30,4 +28,3 @@ class Snowflake:
         for slot in self.__slots__:
             if hasattr(self, slot):
                 setattr(ret, slot, getattr(self, slot))
-

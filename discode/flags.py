@@ -113,7 +113,13 @@ class Intents(Flags):
     @classmethod
     def all(cls) -> Intents:
         return cls(
-            sum((v for k, v in cls.__items__.items() if (isinstance(v, int) and k != "value")))
+            sum(
+                (
+                    v
+                    for k, v in cls.__items__.items()
+                    if (isinstance(v, int) and k != "value")
+                )
+            )
         )
 
     @classmethod
@@ -129,6 +135,7 @@ class Intents(Flags):
         ret = cls.unprivileged()
         ret.guild_messages = True
         return ret
+
 
 class Permissions(Flags):
     create_instant_invite = 1 << 0
@@ -172,6 +179,7 @@ class Permissions(Flags):
     send_messages_in_threads = 1 << 38
     use_embedded_activities = 1 << 39
     moderate_members = 1 << 40
+
 
 class UserFlags(Flags):
     staff = 1 << 0

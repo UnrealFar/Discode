@@ -1,13 +1,12 @@
-
 from __future__ import annotations
 
 __all__ = ("Client",)
 
+import asyncio
+import functools
 from typing import Any, Dict, List, Optional, Union
 
-import asyncio
 import aiohttp
-import functools
 
 from . import utils
 from .connection import Connection
@@ -73,19 +72,19 @@ class Client:
 
     @property
     def users(self) -> List[User]:
-        return [u for u in self._connection.user_cache.values()]
+        return list(self._connection.user_cache.values())
 
     @property
     def guilds(self) -> List[Guild]:
-        return [g for g in self._connection.guild_cache.values()]
+        return list(self._connection.guild_cache.values())
 
     @property
     def messages(self) -> List[Message]:
-        return [g for g in self._connection.message_cache.values()]
+        return list(self._connection.message_cache.values())
 
     @property
     def channels(self) -> List[Union[TextChannel, DMChannel]]:
-        return [c for c in self._connection.channel_cache.values()]
+        return list(self._connection.channel_cache.values())
 
     @property
     def dm_channels(self) -> List[DMChannel]:
@@ -106,8 +105,7 @@ class Client:
         await self._ws.connect(**ws_options)
 
     def run(self, *args, **kwargs):
-        r"""The :meth:`Client.run()` is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine. The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive.
-        """
+        r"""The :meth:`Client.run()` is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine. The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive."""
         loop = self.loop
 
         async def runner():

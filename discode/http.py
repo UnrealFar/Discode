@@ -1,12 +1,12 @@
 import asyncio
 import json
-from typing import TYPE_CHECKING, Any, Dict, List, Sequence, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence
 
 import aiohttp
 
 from .connection import Connection
-from .models import ClientUser, Member, Message
 from .dataclasses import Embed, File
+from .models import ClientUser, Member, Message
 from .utils import UNDEFINED
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class HTTP:
         method: str,
         url: str,
         form: Optional[List[Dict[str, Any]]] = UNDEFINED,
-        **kwargs
+        **kwargs,
     ) -> Any:
         url = f"{self.BASE_URL}{url}"
         headers = kwargs.pop("headers", {})
@@ -112,7 +112,7 @@ class HTTP:
                         "name": f"file",
                         "value": file.fp,
                         "filename": file.filename,
-                        "content_type": "application/octet-stream"
+                        "content_type": "application/octet-stream",
                     }
                 )
             elif len(files) > 1:
@@ -128,7 +128,7 @@ class HTTP:
             payload = await self.request(
                 "POST",
                 f"/channels/{channel_id}/messages",
-                form = form,
+                form=form,
             )
 
         return Message(self.connection, payload)

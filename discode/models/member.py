@@ -7,8 +7,8 @@ if TYPE_CHECKING:
 
 from ..utils import UNDEFINED
 from .abc import Snowflake
-from .user import User
 from .role import Role
+from .user import User
 
 __all__ = ("Member",)
 
