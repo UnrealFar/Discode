@@ -110,16 +110,30 @@ class Client:
         r""":class:`aiohttp.ClientSession`: The client session used by the http client for making requests to the Discord API."""
         return self._http._session
 
-    async def run_task(self, *args, **kwargs):
+    async def run_task(self, *args, **kwargs) -> Client:
+        r"""This method is a coroutine. It is used to start the client, i.e., connect to gateway API and the REST API.
+        It prepares the client completely.
+
+        Returns
+        -------
+        :class:`Client`
+            The client itself.
+        """
         self._user = await self._http.login()
         ws_options = kwargs.pop("ws_options", {})
         self._ws: Gateway = Gateway(self)
         await self._ws.connect(**ws_options)
 
     def run(self, *args, **kwargs):
-        r"""The :meth:`Client.run()` is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine. The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive.
+        r"""The is method is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine.
+        The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive.
 
         .. warning:: Code written after this function is called will most probably not get executed till the bot stops.
+
+        Returns
+        -------
+        :class:`Client`
+            The client itself.
         """
         loop = self.loop
 
@@ -138,6 +152,7 @@ class Client:
             pass
         finally:
             future.remove_done_callback(stop)
+            return self
 
     async def close(self) -> None:
         r"""Closes the client, the http client, and the gateway connection."""
@@ -234,7 +249,17 @@ class Client:
         event: :class:`str`
             The event to wait for. Must be a valid event documented under :class:`GatewayEvent`.
         check: Union[Callable[True], Coro]
-            The check that should be run on the event. Can either be a normal function or a coroutine, with valid parameters specified under :class:`GatewayEvent`.
+            The check that should be run on the event. Can either be a normal function or a coroutine, with valid parameters specified under :class:`GatewayEvent`. Must return :class:`True` if the check is successful.
+        
+        Returns
+        -------
+        :class:`asyncio.Future`
+            The future created to wait for the event.
+
+        Raises
+        ------
+        :class:`asyncio.TimeoutError`
+            The timeout has finished.
         """
         event = event.lower()
         listener = self._ws.wait_for(event, check)
