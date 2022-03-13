@@ -129,12 +129,14 @@ class Intents(Flags):
         ret.members = False
         ret.presences = False
         ret.guild_messages = False
+        ret.message_content = False
         return ret
 
     @classmethod
     def default(cls) -> Intents:
         ret = cls.unprivileged()
         ret.guild_messages = True
+        ret.message_content = True
         return ret
 
 class Permissions(Flags):
