@@ -49,7 +49,7 @@ class Member(User):
             connection.add_user(self._user)
         self.id = self._user.id
         self.name = self._user.name
-        self.discriminator  = self._user.discriminator
+        self.discriminator = self._user.discriminator
         self.nick: str = payload.pop("nick", None)
         self.joined_at = None
         self.premium_since = None

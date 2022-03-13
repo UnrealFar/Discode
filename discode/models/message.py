@@ -9,6 +9,7 @@ from .user import User
 
 __all__ = ("Message",)
 
+
 class Message(Snowflake):
 
     __slots__ = (

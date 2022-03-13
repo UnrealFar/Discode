@@ -16,7 +16,8 @@ from .gateway import Gateway
 from .http import HTTP
 from .models import ClientUser, DMChannel, Guild, Message, TextChannel, User
 
-Coro = TypeVar("Coro", bound = Callable[..., Coroutine[Any, Any, Any]])
+Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
+
 
 class Client:
 
@@ -100,7 +101,9 @@ class Client:
     @property
     def invite_url(self) -> str:
         r""":class:`str`: Generates an invite url forr the client and returns it."""
-        return utils.invite_url(client_id=self.user.id, permissions = Permissions(administrator = True))
+        return utils.invite_url(
+            client_id=self.user.id, permissions=Permissions(administrator=True)
+        )
 
     @property
     def session(self) -> aiohttp.ClientSession:
@@ -137,8 +140,7 @@ class Client:
             future.remove_done_callback(stop)
 
     async def close(self) -> None:
-        r"""Closes the client, the http client, and the gateway connection.
-        """
+        r"""Closes the client, the http client, and the gateway connection."""
         await self._http.logout()
         await self._http.close()
         for task in asyncio.all_tasks():
@@ -194,12 +196,14 @@ class Client:
         Raises
         ------
         TypeError
-            The coro passed in parameters isn't a coroutine. 
+            The coro passed in parameters isn't a coroutine.
         """
         if event not in vars(GatewayEvent).values():
             raise Exception(f"Invalid Listener: {event}")
         if not asyncio.iscoroutinefunction(coro):
-            raise TypeError(f"Couldn't register {coro} as a listener as it was of type {type(coro)} and the library expected a coroutine!")
+            raise TypeError(
+                f"Couldn't register {coro} as a listener as it was of type {type(coro)} and the library expected a coroutine!"
+            )
         if event in self._listeners:
             self._listeners.append(coro)
         else:

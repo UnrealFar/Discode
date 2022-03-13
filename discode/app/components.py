@@ -9,8 +9,7 @@ __all__ = (
 
 import asyncio
 import os
-from typing import (TYPE_CHECKING, Any, Awaitable, Callable, Dict, Optional,
-                    Union)
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, Optional, Union
 
 from ..enums import ButtonStyle
 from ..utils import UNDEFINED

@@ -14,7 +14,9 @@ class Flags:
         self.value: int = value
         for flag, toggle in flags.items():
             if flag not in self.__items__:
-                raise TypeError(f"{flag} is not a valid flag for {self.__class__.__name__}")
+                raise TypeError(
+                    f"{flag} is not a valid flag for {self.__class__.__name__}"
+                )
             self._apply(flag, toggle)
 
     def _apply(self, flag: str, toggle: bool):
@@ -118,7 +120,6 @@ class Intents(Flags):
     message_content = 1 << 15
     guild_scheduled_events = 1 << 16
 
-
     @classmethod
     def all(cls) -> Intents:
         return cls(**{k: True for k in cls.__items__})
@@ -138,6 +139,7 @@ class Intents(Flags):
         ret.guild_messages = True
         ret.message_content = True
         return ret
+
 
 class Permissions(Flags):
     create_instant_invite = 1 << 0
