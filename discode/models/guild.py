@@ -6,6 +6,7 @@ from .assets import Asset
 from .channel import TextChannel
 from .member import Member
 from .role import Role
+from .emoji import Emoji
 
 __all__ = ("Guild",)
 
@@ -30,6 +31,7 @@ class Guild(Snowflake):
         "_channels",
         "_roles",
         "_icon",
+        "_emojis",
         "_connection",
     )
 
@@ -49,10 +51,14 @@ class Guild(Snowflake):
             if c["type"] == 0:
                 ch = TextChannel(connection, c)
                 self._add_channel(ch)
-        self._roles: Dict = {}
+        self._roles: Dict[int, Role] = {}
         for r in payload.pop("roles", tuple()):
             role = Role(connection, r)
             self._add_role(role)
+        self._emojis: Dict[int, Emoji] = {}
+        for e in payload.pop("emojis", ()):
+            emoji = Emoji(connection, e)
+            self._emojis[emoji.id] = emoji
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id} name = { self.name}>"
@@ -65,7 +71,7 @@ class Guild(Snowflake):
     @property
     def members(self) -> List[Member]:
         r"""List[:class:`Member`]: An arry of all the members in the guild."""
-        return [m for m in getattr(self, "_members", {}).values()]
+        return list(self._members.values())
 
     def get_member(self, member_id) -> Member:
         r"""
@@ -88,7 +94,7 @@ class Guild(Snowflake):
     @property
     def channels(self) -> Union[TextChannel]:
         r"""List[:class:`TextChannel`]: All the channels attached to the guilds cached by the client."""
-        return [c for c in self._channels.values()]
+        return list(self._channels.values())
 
     @property
     def text_channels(self) -> List[TextChannel]:
@@ -103,13 +109,17 @@ class Guild(Snowflake):
 
     @property
     def roles(self) -> List[Role]:
-        return [r for r in getattr(self, "_roles", {}).values()]
+        return list(self._roles.values())
 
     def _add_role(self, role):
         self._roles[role.id] = role
 
     def _remove_role(self, role):
         self._roles.pop(role.id, None)
+
+    @property
+    def emojis(self) -> List[Emoji]:
+        return list(self._emojis.values())
 
     @property
     def icon(self) -> Asset:
