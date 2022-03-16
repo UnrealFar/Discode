@@ -1,14 +1,58 @@
-from typing import Any, Dict, List, Union
+from __future__ import annotations
+
+__all__ = ("Message", "MessageReference")
+
+from typing import Any, Optional, Dict, List, Union, TYPE_CHECKING
 
 from ..app import Button, LinkButton, component_from_dict
+from ..utils import UNDEFINED
 from .abc import Snowflake
 from .channel import TextChannel
 from .guild import Guild
 from .member import Member
 from .user import User
 
-__all__ = ("Message",)
+if TYPE_CHECKING:
+    from ..connection import Connection
 
+class MessageReference(Snowflake):
+
+    __slots__ = (
+        "id",
+        "channel_id",
+        "guild_id",
+        "fail_if_not_exists",
+        "referrer",
+        "_connection"
+    )
+
+    if TYPE_CHECKING:
+        id: int
+        _connection: Connection
+        channel_id: Optional[int]
+        guild_id: Optional[int]
+        fail_if_not_exists: bool
+        referrer: Message
+
+    def __init__(self, connection, payload: Dict[str, Any]):
+        self._connection = connection
+        self.id = int(payload.pop("message_id", UNDEFINED))
+        self.channel_id = int(payload.pop("channel_id", UNDEFINED))
+        self.guild_id = int(payload.pop("guild_id", UNDEFINED))
+        self.fail_if_not_exists = payload.pop("fail_if_not_exists", True)
+        self.referrer = payload.pop("msg")
+
+    @property
+    def cached_message(self) -> Optional[Message]:
+        return self._connection.message_cache.get(self.id)
+
+    async def fetch_message(self) -> Optional[Message]:
+        http = self._connection.http
+        msg_payload = await http.request(
+            "GET",
+            f"/channels/{self.channel_id}/messages/{self.id}"
+        )
+        return Message(self._connection, msg_payload)
 
 class Message(Snowflake):
 
@@ -18,21 +62,36 @@ class Message(Snowflake):
         "channel_id",
         "guild_id",
         "author_id",
+        "reference",
         "_components",
         "_connection",
     )
 
+    if TYPE_CHECKING:
+        id: int
+        _connection: Connection
+        content: str
+        channel_id: int
+        guild_id: Optional[int]
+        author_id: int
+        reference: MessageReference
+
     def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
-        self.id: int = int(payload.pop("id"))
-        self.content: str = payload.pop("content", None)
-        self.channel_id: int = int(payload.pop("channel_id"))
-        g_id = payload.pop("guild_id", None)
-        self.guild_id: int = int(g_id) if g_id else None
-        self.author_id: int = int(payload.pop("author").get("id", 0))
+        self.id = int(payload.pop("id"))
+        self.content = payload.pop("content", None)
+        self.channel_id = int(payload.pop("channel_id"))
+        self.guild_id = int(payload.pop("guild_id", UNDEFINED))
+        self.author_id = int(payload.pop("author").get("id", 0))
         self._components: List[Union[Button, LinkButton]] = [
             component_from_dict(comp) for comp in payload.pop("components", ())
         ]
+        ref = payload.pop("message_reference", UNDEFINED)
+        if ref != UNDEFINED:
+            ref["msg"] = self
+            self.reference = MessageReference(connection, ref)
+        else:
+            self.reference = None
         del payload
 
     def __repr__(self) -> str:
