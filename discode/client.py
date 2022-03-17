@@ -55,7 +55,7 @@ class Client:
     ):
         self.token: str = token.strip()
         self.loop: asyncio.AbstractEventLoop = (
-            loop if loop else asyncio.get_event_loop()
+            loop if loop else utils.get_event_loop()
         )
         self.intents: Intents = intents if intents else Intents.all()
         self.api_version: int = api_version

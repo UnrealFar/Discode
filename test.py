@@ -19,18 +19,20 @@ def get_info():
 
 
 @discode.utils.async_function
-def pront(*args):
-    return print(*args)
-
+def run_docs(make = False):
+    if make:
+        os.system("cd docs\nmake html\ncd\ncd discode")
+    return os.system("python -m http.server -d docs/_build/html")
 
 @bot.on_event(discode.GatewayEvent.READY)
 async def on_ready():
     print(get_info())
     print(bot.user, "is ready!")
+    await run_docs(make = True)
 
 @bot.on_event(discode.GatewayEvent.MESSAGE_CREATE)
 async def on_message(message: discode.Message):
-    await pront(message.author, ":", message)
+    print(message.author, ":", message)
     msg = message.content
 
     if msg.startswith("d!hi"):

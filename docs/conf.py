@@ -38,7 +38,8 @@ autodoc_inherit_docstrings = False
 master_doc = "index"
 
 extlinks = {
-    "github": ("https://github.com/TheFarGG/Discode/", "Link to Github Repository")
+    "github": ("https://github.com/TheFarGG/Discode/", "Link to Github Repository"),
+    "invite": ("https://discord.gg/5JXT6npG4X", "Invite to Discord server.")
 }
 
 intersphinx_mapping = {"py": ("https://docs.python.org/3", None)}
@@ -51,7 +52,6 @@ pygments_style = "friendly"
 exclude_patterns = []
 
 htmlhelp_basename = "discode.doc"
-html_context = {"dsc": "https://discord.gg/5JXT6npG4X"}
 html_show_sphinx = False
 html_theme = "furo"
 html_static_path = ["_static"]

@@ -42,18 +42,27 @@ def invite_url(
 ) -> str:
     r"""Generates an invite url based on the given parameters for the client."""
     ret = f"https://discord.com/oauth2/authorize?client_id={client_id}"
-    ret += "&scope=" + "".join(scopes or ("bot",))
+    ret += "&scope=" + "+".join(scopes or ("bot","application.commands"))
     if permissions:
         ret += f"&permissions={int(permissions)}"
     return ret
 
 
-def decorator(func: Callable):
-    func._is_decorator = True
-    return func
+def get_event_loop() -> asyncio.AbstractEventLoop:
+    r"""Alternative to :meth:`asyncio.get_event_loop`.
+    Creates a new loop or fetches an existing event loop and returns it.
+    Avoids :class:`DeprecationWarning` warning to be thrown while called in Python v3.10 and higher versions.
+
+    Returns
+    :class:`asyncio.AbstractEventLoop`
+        The existing or newly created loop.
+    """
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.new_event_loop()
 
 
-@decorator
 def async_function(sync_function: Callable):
     r"""Decorator to make synchronous function asynchronous. Useful with modules like Pillow, which have a synchronous backend but are extremely useful in image manipulation.
 
@@ -62,7 +71,7 @@ def async_function(sync_function: Callable):
     .. code-block:: py
 
         # inside coroutine:
-        await asyncio.get_event_loop.run_in_executor(
+        await get_event_loop.run_in_executor(
             None,
             functools.partial(sync_function, *args, **kwargs)
         )
@@ -87,7 +96,7 @@ def async_function(sync_function: Callable):
     async def wrapper(*args, **kwargs):
         r"""Internal wrapper to run code asynchronously."""
         partial = functools.partial(sync_function, *args, **kwargs)
-        loop = asyncio.get_event_loop()
+        loop = get_event_loop()
         return loop.run_in_executor(None, partial)
 
     return wrapper

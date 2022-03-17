@@ -26,6 +26,7 @@ Manuals
 Links
 --------
 - :github:`Github <>`
+- :invite:`Discord Invite <>`
 
 Indices and tables
 -------------------
