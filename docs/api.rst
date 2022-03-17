@@ -80,9 +80,11 @@ Discode provides a wide range of utilities for making developing Discord bots, a
 
 .. automodule:: discode.utils
     :members:
-    :exclude-members: async_function
+    :exclude-members: async_function, deprecated
 
 .. autodecorator:: discode.utils.async_function
+
+.. autodecorator:: discode.utils.deprecated
 
 Models
 ------

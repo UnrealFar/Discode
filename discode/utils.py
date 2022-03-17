@@ -2,11 +2,45 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Union, final
+import warnings
+import re
+from typing import TYPE_CHECKING, Any, Optional, Callable, Iterable, Union, final
 
 if TYPE_CHECKING:
     from .flags import Permissions
 
+version = "2.0.0b2"
+
+
+def deprecated(instead: Optional[str] = None, from_version: str = version):
+    r"""Deprecate a function with this decorator.
+
+    Example
+    -----
+
+    .. code-block:: python
+
+        @utils.deprecated(instead = "new_function")
+        def deprecated_function(*args, **kwargs)):
+            ...
+
+        # somewhere else in code:
+        depreceated_function(...)
+
+        # Now this warns the user not to use the function and instead use an alternative method to do so..
+    """
+
+    def inner(func: Callable):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            msg = f"{func.__name__} has been deprecated since version {from_version}."
+            if instead != None:
+                msg = f"{msg} Please use {instead} instead."
+            warnings.warn(msg, DeprecationWarning)
+            return func(*args, **kwargs)
+        return wrapper
+
+    return inner
 
 @final
 class _UNDEFINED:
