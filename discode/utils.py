@@ -40,7 +40,13 @@ def invite_url(
     scopes: Iterable[str] = UNDEFINED,
     redirect_uri: str = UNDEFINED,
 ) -> str:
-    r"""Generates an invite url based on the given parameters for the client."""
+    r"""Generates an invite url based on the given parameters for the client.
+
+    Returns
+    -------
+    :class:`str`
+        The invite url generated.
+    """
     ret = f"https://discord.com/oauth2/authorize?client_id={client_id}"
     ret += "&scope=" + "+".join(scopes or ("bot","application.commands"))
     if permissions:
@@ -54,6 +60,7 @@ def get_event_loop() -> asyncio.AbstractEventLoop:
     Avoids :class:`DeprecationWarning` warning to be thrown while called in Python v3.10 and higher versions.
 
     Returns
+    -------
     :class:`asyncio.AbstractEventLoop`
         The existing or newly created loop.
     """
@@ -71,7 +78,7 @@ def async_function(sync_function: Callable):
     .. code-block:: py
 
         # inside coroutine:
-        await get_event_loop.run_in_executor(
+        await get_event_loop().run_in_executor(
             None,
             functools.partial(sync_function, *args, **kwargs)
         )
