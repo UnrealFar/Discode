@@ -49,16 +49,14 @@ class Client:
         self,
         token: str,
         *,
-        intents: Intents = None,
+        intents: Optional[Intents] = None,
         loop: asyncio.AbstractEventLoop = None,
-        api_version: int = 10,
+        api_version: Optional[int] = 10,
     ):
         self.token: str = token.strip()
-        self.loop: asyncio.AbstractEventLoop = (
-            loop if loop else utils.get_event_loop()
-        )
+        self.loop: asyncio.AbstractEventLoop = loop if loop else utils.get_event_loop()
         self.intents: Intents = intents if intents else Intents.all()
-        self.api_version: int = api_version
+        self.api_version: int = int(api_version)
         self._http: HTTP = HTTP(self)
         self._connection: Connection = Connection(self)
         self._listeners: Dict[str, Any] = {}
@@ -250,7 +248,7 @@ class Client:
             The event to wait for. Must be a valid event documented under :class:`GatewayEvent`.
         check: Union[Callable[True], Coro]
             The check that should be run on the event. Can either be a normal function or a coroutine, with valid parameters specified under :class:`GatewayEvent`. Must return :class:`True` if the check is successful.
-        
+
         Returns
         -------
         :class:`asyncio.Future`

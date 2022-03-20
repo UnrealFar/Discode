@@ -39,7 +39,7 @@ master_doc = "index"
 
 extlinks = {
     "github": ("https://github.com/TheFarGG/Discode/", "Link to Github Repository"),
-    "invite": ("https://discord.gg/5JXT6npG4X", "Invite to Discord server.")
+    "invite": ("https://discord.gg/5JXT6npG4X", "Invite to Discord server."),
 }
 
 intersphinx_mapping = {"py": ("https://docs.python.org/3", None)}

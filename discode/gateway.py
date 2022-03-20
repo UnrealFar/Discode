@@ -36,6 +36,7 @@ class Gateway:
         self.http = client._http
         self.connection = client._connection
         self.loop: asyncio.AbstractEventLoop = client.loop
+        self.lock: asyncio.Lock = asyncio.Lock()
         self.handler: SocketHandler = SocketHandler(self)
 
         self.token: str = client.token
@@ -46,10 +47,16 @@ class Gateway:
         self.inflator = zlib.decompressobj()
         self.buffer = bytearray()
         self.ZLIB_SUFFIX = b"\x00\x00\xff\xff"
+        self._last_send: float = None
 
     @property
     def latency(self) -> float:
         return self.handler.latency
+
+    def is_ratelimited(self) -> bool:
+        if self._last_send:
+            return (time.perf_counter() - self._last_send) < 0.5
+        return False
 
     def wait_for(self, event, check) -> DispatchListener:
         fut = self.loop.create_future()
@@ -125,7 +132,16 @@ class Gateway:
             return
         return data
 
+    async def block_send(self):
+        if self.is_ratelimited():
+            async with self._lock:
+                while True:
+                    if not self.is_ratelimited():
+                        break
+            self._last_send = time.perf_counter()
+
     async def send(self, data: str):
+        await self.block_send()
         await self.ws.send_str(str(data))
 
     async def send_json(self, payload: dict):

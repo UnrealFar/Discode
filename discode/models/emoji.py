@@ -12,6 +12,7 @@ from ..utils import UNDEFINED
 if TYPE_CHECKING:
     from ..connection import Connection
 
+
 class Emoji(Snowflake):
 
     if TYPE_CHECKING:

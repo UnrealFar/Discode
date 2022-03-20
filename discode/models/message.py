@@ -15,6 +15,7 @@ from .user import User
 if TYPE_CHECKING:
     from ..connection import Connection
 
+
 class MessageReference(Snowflake):
 
     __slots__ = (
@@ -23,7 +24,7 @@ class MessageReference(Snowflake):
         "guild_id",
         "fail_if_not_exists",
         "referrer",
-        "_connection"
+        "_connection",
     )
 
     if TYPE_CHECKING:
@@ -50,9 +51,11 @@ class MessageReference(Snowflake):
         http = self._connection.http
         msg_payload = await http.request(
             "GET",
-            f"/channels/{self.channel_id}/messages/{self.id}"
+            "/channels/{channel_id}/messages/{message_id}",
+            parameters={"channel_id": self.channel_id, "message_id": self.id},
         )
         return Message(self._connection, msg_payload)
+
 
 class Message(Snowflake):
 
@@ -64,6 +67,7 @@ class Message(Snowflake):
         "author_id",
         "reference",
         "_components",
+        "_mentions",
         "_connection",
     )
 
@@ -83,7 +87,7 @@ class Message(Snowflake):
         self.channel_id = int(payload.pop("channel_id"))
         self.guild_id = int(payload.pop("guild_id", UNDEFINED))
         self.author_id = int(payload.pop("author").get("id", 0))
-        self._components: List[Union[Button, LinkButton]] = [
+        self._components = [
             component_from_dict(comp) for comp in payload.pop("components", ())
         ]
         ref = payload.pop("message_reference", UNDEFINED)
@@ -92,6 +96,13 @@ class Message(Snowflake):
             self.reference = MessageReference(connection, ref)
         else:
             self.reference = None
+        ms_data = payload.pop("mentions", ())
+        self._mentions = []
+        if len(ms_data) >= 1:
+            for md in ms_data:
+                u = connection.get_user(int(md.get("id", UNDEFINED)))
+                if u:
+                    self._mentions.append(u)
         del payload
 
     def __repr__(self) -> str:
@@ -118,3 +129,7 @@ class Message(Snowflake):
     @property
     def components(self) -> List[Union[Button, LinkButton]]:
         return self._components.copy()
+
+    @property
+    def mentions(self) -> List[User]:
+        return self._mentions.copy()

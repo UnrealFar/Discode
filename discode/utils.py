@@ -38,9 +38,11 @@ def deprecated(instead: Optional[str] = None, from_version: str = version):
                 msg = f"{msg} Please use {instead} instead."
             warnings.warn(msg, DeprecationWarning)
             return func(*args, **kwargs)
+
         return wrapper
 
     return inner
+
 
 @final
 class _UNDEFINED:
@@ -82,7 +84,7 @@ def invite_url(
         The invite url generated.
     """
     ret = f"https://discord.com/oauth2/authorize?client_id={client_id}"
-    ret += "&scope=" + "+".join(scopes or ("bot","application.commands"))
+    ret += "&scope=" + "+".join(scopes or ("bot", "application.commands"))
     if permissions:
         ret += f"&permissions={int(permissions)}"
     return ret
