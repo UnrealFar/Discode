@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Literal
 from .connection import Connection
 from .dataclasses import Embed, File
 from .models import ClientUser, Member, Message
-from .utils import UNDEFINED
+from .utils import UNDEFINED, get_event_loop
 
 if TYPE_CHECKING:
     from .client import Client
@@ -39,6 +39,7 @@ class HTTP:
         client,
     ):
         self.client: Client = client
+        self.loop: asyncio.AbstractEventLoop = get_event_loop()
         self.ratelimiter = Ratelimiter(self)
 
     @property
@@ -95,7 +96,11 @@ class HTTP:
                     fmt = f"Request limit for path: {path!r} has been exhausted. Delaying this request by {retry_after}seconds."
                     _logger.warning(fmt)
                     unlock = False
-                    await asyncio.sleep(retry_after)
+                    async def unlocker():
+                        await asyncio.sleep(retry_after)
+                        unlock = True
+                        path_lock.release()
+                    self.loop.create_task(unlocker())
 
                 if 300 > status >= 200:
                     path_lock.release()
