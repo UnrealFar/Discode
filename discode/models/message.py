@@ -103,7 +103,6 @@ class Message(Snowflake):
                 u = connection.get_user(int(md.get("id", UNDEFINED)))
                 if u:
                     self._mentions.append(u)
-        del payload
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id} content = {self.content}"

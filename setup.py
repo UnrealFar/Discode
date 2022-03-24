@@ -28,13 +28,13 @@ classifiers = [
 
 setup(
     name="Discode.py",
-    author="TheFarGG",
-    maintainer=", ".join(["TheFarGG"]),
-    url="https://github.com/thefargg/discode",
+    author="UnrealFar",
+    maintainer=", ".join(("UnrealFar",)),
+    url="https://github.com/UnrealFar/discode",
     version=version,
     packages=packages,
     license="MIT",
-    description="Asynchronous Python API wrapper for the Discord Gateway API and Discord REST API.",
+    description="Asynchronous Python API wrapper for the Discord API.",
     long_description=readme,
     long_description_content_type="text/markdown",
     include_package_data=True,
@@ -42,5 +42,5 @@ setup(
     extras_require={"docs": ["sphinx", "furo"]},
     python_requires=">=3.7.0",
     classifiers=classifiers,
-    keywords="Discode, discode, Discord, discord",
+    keywords="Discode, discode, Discord, discord, Discode.py",
 )

@@ -9,8 +9,8 @@ sys.path.append(os.path.abspath("extensions"))
 
 project = "Discode"
 
-copyright = "2021-present TheFarGG"
-author = "TheFarGG"
+copyright = "2021-present UnrealFar"
+author = "UnrealFar"
 
 version = re.search(
     r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
@@ -38,7 +38,7 @@ autodoc_inherit_docstrings = False
 master_doc = "index"
 
 extlinks = {
-    "github": ("https://github.com/TheFarGG/Discode/", "Link to Github Repository"),
+    "github": ("https://github.com/UnrealFar/Discode/", "Link to Github Repository"),
     "invite": ("https://discord.gg/5JXT6npG4X", "Invite to Discord server."),
 }
 
