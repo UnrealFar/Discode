@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterator, Optional, Tuple, Type, Union
 
-__all__ = ("Intents",)
+__all__ = ("Intents", "Permissions", "UserFlags")
 
 
 class Flags:
@@ -48,8 +48,8 @@ class Flags:
         return self.value
 
     def __iter__(self) -> Iterator[Tuple[str, bool]]:
-        for n in self.__items__:
-            yield getattr(self, n)
+        for k in self.__items__:
+            yield k, getattr(self, k)
 
     __eq__ = (
         lambda self, other: isinstance(other, self.__class__)
