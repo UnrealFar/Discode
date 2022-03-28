@@ -12,14 +12,16 @@ from .abc import Snowflake
 if TYPE_CHECKING:
     from .guild import Guild
 
+
 class RoleTags:
     bot_id: Optional[int]
     integration_id: Optional[int]
-    
+
     def __init__(self, **data):
-        bot_id = int(data['bot_id']) if 'bot_id' in data else None
-        integration_id = int(data['integration_id']) if 'integration_id' in data else None
-        
+        bot_id = int(data["bot_id"]) if "bot_id" in data else None
+        integration_id = (
+            int(data["integration_id"]) if "integration_id" in data else None
+        )
 
         self.bot_id = bot_id
         self.integration_id = integration_id
@@ -30,6 +32,7 @@ class RoleTags:
 
     def is_premium_subscriber(self) -> bool:
         return self._premium_subscriber is None
+
 
 class Role(Snowflake):
     r"""Represents a Discord role."""

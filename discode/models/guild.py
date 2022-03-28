@@ -50,7 +50,7 @@ class Guild(Snowflake):
                 self._add_channel(ch)
         self._roles: Dict[int, Role] = {}
         for r in payload.pop("roles", tuple()):
-            r['guild'] = self
+            r["guild"] = self
             role = Role(connection, r)
             self._add_role(role)
         self._emojis: Dict[int, Emoji] = {}

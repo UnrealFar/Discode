@@ -194,6 +194,7 @@ class Permissions(Flags):
     def all(cls: Permissions) -> Permissions:
         return cls(2199023255551)
 
+
 class UserFlags(Flags):
     staff = 1 << 0
     partner = 1 << 1

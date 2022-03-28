@@ -97,9 +97,11 @@ class HTTP:
                     fmt = f"Request limit for path: {path!r} has been exhausted. Delaying this request by {retry_after}seconds."
                     _logger.warning(fmt)
                     unlock = False
+
                     async def unlocker():
                         await asyncio.sleep(retry_after)
                         path_lock.release()
+
                     self.loop.create_task(unlocker())
 
                 if 300 > status >= 200:
@@ -107,9 +109,14 @@ class HTTP:
                     return await req.json()
 
                 elif status == 429:
-                    if not h.get('Via') or isinstance(data, str):
-                        if "Access denied | discord.com used Cloudflare to restrict access" in data:
-                            raise Exception("You have been banned by Cloudflare from accessing the Discord API.")
+                    if not h.get("Via") or isinstance(data, str):
+                        if (
+                            "Access denied | discord.com used Cloudflare to restrict access"
+                            in data
+                        ):
+                            raise Exception(
+                                "You have been banned by Cloudflare from accessing the Discord API."
+                            )
                         raise Exception(data)
 
                     _global = data.get("global", False)

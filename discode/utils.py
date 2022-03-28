@@ -182,12 +182,12 @@ def escape_markdown(text: str):
         .replace(">", "\>")
     )
 
+
 class NamedTuple:
     __slots__ = (
         "name",
-        "fields"
+        "fields",
     )
-
 
     def __init__(
         self,
