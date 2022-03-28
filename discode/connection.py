@@ -5,6 +5,7 @@ from .models import Guild, Message, User
 
 class Connection:
     def __init__(self, client):
+        self.me_id: int = None
         self.client = client
         self.http = client._http
         self.user_cache: Dict[int, User] = {}

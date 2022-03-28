@@ -142,7 +142,7 @@ class HTTP:
         self.BASE_URL = self.BASE_URL.replace("v10", f"v{self.client.api_version}")
         p = await self.request("GET", "/users/@me")
         user = ClientUser(self.connection, p)
-        self.connection.my_id = user.id
+        self.connection.me_id = user.id
         return user
 
     async def logout(self):

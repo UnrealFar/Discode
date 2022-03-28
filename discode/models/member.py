@@ -89,12 +89,22 @@ class Member(User):
         return self._guild
 
     @property
-    def roles(self) -> List[Role]:
-        return list(self._roles.values())
-
-    @property
     def user(self) -> User:
         return self._user
+
+    @property
+    def roles(self) -> List[Role]:
+        ret = list(self._roles.values())
+        ret.append(self.guild.default_role)
+        ret.sort()
+        return ret
+
+    @property
+    def top_role(self) -> Role:
+        guild = self.guild
+        if len(self._roles) == 0:
+            return guild.default_role
+        return max(self._roles.values())
 
     @property
     def guild_permissions(self) -> Permissions:

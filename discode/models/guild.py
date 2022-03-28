@@ -50,6 +50,7 @@ class Guild(Snowflake):
                 self._add_channel(ch)
         self._roles: Dict[int, Role] = {}
         for r in payload.pop("roles", tuple()):
+            r['guild'] = self
             role = Role(connection, r)
             self._add_role(role)
         self._emojis: Dict[int, Emoji] = {}
@@ -63,12 +64,12 @@ class Guild(Snowflake):
             self._emojis[emoji.id] = emoji
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} id = {self.id} name = { self.name}>"
+        return f"<{self.__class__.__name__} id={self.id} name={self.name}>"
 
     @property
     def me(self) -> Member:
         r""":class:`Member`: The member object of the client user in the guild."""
-        return self.get_member(self._connection.my_id)
+        return self.get_member(self._connection.me_id)
 
     @property
     def members(self) -> List[Member]:
@@ -112,6 +113,17 @@ class Guild(Snowflake):
     @property
     def roles(self) -> List[Role]:
         return list(self._roles.values())
+
+    @property
+    def default_role(self) -> Role:
+        return self.get_role(self.id)
+
+    @property
+    def me_role(self) -> Role:
+        me_id = self._connection.me_id
+        for r in self._roles.values():
+            if r.tags.bot_id == me_id:
+                return r
 
     def get_role(self, role_id: int) -> Optional[Role]:
         return self._roles.get(role_id)
