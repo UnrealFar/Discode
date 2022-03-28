@@ -38,7 +38,7 @@ def run_docs(make=False):
 async def on_ready():
     print(get_info())
     print(bot.user, "is ready!")
-    bot.loop.create_task(run_docs(make=True))
+    #bot.loop.create_task(run_docs(make=True))
 
 
 @bot.on_event(discode.GatewayEvent.MESSAGE_CREATE)

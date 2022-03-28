@@ -4,7 +4,7 @@ import asyncio
 import functools
 import warnings
 import re
-from typing import TYPE_CHECKING, Any, Optional, Callable, Iterable, Union, final
+from typing import TYPE_CHECKING, Any, Dict, Optional, Callable, Iterable, Union, final
 
 if TYPE_CHECKING:
     from .flags import Permissions
@@ -181,3 +181,34 @@ def escape_markdown(text: str):
         .replace("~", "\~")
         .replace(">", "\>")
     )
+
+class NamedTuple:
+    __slots__ = (
+        "name",
+        "fields"
+    )
+
+
+    def __init__(
+        self,
+        name: str,
+        **fields,
+    ):
+        self.name: str = name
+        self.fields: Dict[str, Any]
+        for k, v in fields:
+            if k in ("name", "fields"):
+                fmt = f"{k} is a prohibited attribute."
+                raise AttributeError(fmt)
+            self.fields[k] = v
+
+    def __getattribute__(self, attr: Optional[str]) -> Any:
+        if isinstance(attr, str):
+            if attr == "name":
+                return self.name
+            elif attr == "fields":
+                return self.fields.copy()
+            return self.fields[attr]
+
+    def __getitem_(self, item: Optional[str]) -> Any:
+        return self.fields[item]

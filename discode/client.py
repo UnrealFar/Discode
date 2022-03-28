@@ -3,7 +3,6 @@ from __future__ import annotations
 __all__ = ("Client",)
 
 import asyncio
-import functools
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Union, TypeVar
 
 import aiohttp

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -6,6 +8,7 @@ if TYPE_CHECKING:
     from .channel import DMChannel
 
 from ..utils import UNDEFINED
+from ..flags import Permissions
 from .abc import Snowflake
 from .role import Role
 from .user import User
@@ -19,8 +22,6 @@ class Member(User):
         id: int
         name: str
         discriminator: str
-        guild: Guild
-        user: User
 
     __slots__ = (
         "id",
@@ -28,7 +29,7 @@ class Member(User):
         "name",
         "discriminator",
         "nick",
-        "guild_id",
+        "_guild",
         "_roles",
         "joined_at",
         "dm_channel",
@@ -40,7 +41,6 @@ class Member(User):
 
     def __init__(self, connection, payload: Dict[str, Any]):
         self._connection = connection
-        self.guild_id = payload.pop("guild_id", None)
         user = payload.pop("user", {})
         uid = user.get("id")
         self._user = connection.get_user(uid)
@@ -64,6 +64,13 @@ class Member(User):
         self._avatar: str = payload.pop("avatar", None)
         self._banner: str = payload.pop("banner", None)
         self.dm_channel: DMChannel = None
+        guild = payload.pop("guild")
+        self._guild: Guild = guild
+        roles = {}
+        self._roles: Dict[int, Role] = roles
+        for r in payload.pop("roles", ()):
+            role = guild.get_role(int(r))
+            roles[role.id] = role
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id} name = {self.name} discriminator = {self.discriminator} nick = {self.nick}>"
@@ -77,13 +84,29 @@ class Member(User):
         return self.nick or self.name
 
     @property
-    def guild(self):
+    def guild(self) -> Guild:
         r""":class:`Guild`: The guild to which the member is attached to."""
-        return self._connection.get_guild(self.guild_id)
+        return self._guild
 
     @property
-    def user(self):
+    def roles(self) -> List[Role]:
+        return list(self._roles.values())
+
+    @property
+    def user(self) -> User:
         return self._user
+
+    @property
+    def guild_permissions(self) -> Permissions:
+        guild = self.guild
+        if guild.owner_id == self.id:
+            return Permissions.all()
+        ret = Permissions(0)
+        for r in self._roles.values():
+            ret.value |= r.permissions.value
+        if ret.administrator:
+            return Permissions.all()
+        return ret
 
     async def edit(
         self,

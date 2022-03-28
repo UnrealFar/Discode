@@ -25,10 +25,11 @@ _logger = logging.getLogger("discode")
 
 
 async def json_or_text(response: aiohttp.ClientResponse) -> str:
+    t = await response.text("utf-8")
     try:
-        return await response.json()
+        return json.dumps(t)
     except:
-        await response.text(encoding="utf-8")
+        return t
 
 
 class HTTP:
@@ -98,7 +99,6 @@ class HTTP:
                     unlock = False
                     async def unlocker():
                         await asyncio.sleep(retry_after)
-                        unlock = True
                         path_lock.release()
                     self.loop.create_task(unlocker())
 
@@ -107,8 +107,10 @@ class HTTP:
                     return await req.json()
 
                 elif status == 429:
-                    if not h.get("Via") is None:
-                        raise Exception(data.get("message"))
+                    if not h.get('Via') or isinstance(data, str):
+                        if "Access denied | discord.com used Cloudflare to restrict access" in data:
+                            raise Exception("You have been banned by Cloudflare from accessing the Discord API.")
+                        raise Exception(data)
 
                     _global = data.get("global", False)
                     retry_after = data.get("retry_after")

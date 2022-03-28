@@ -8,6 +8,7 @@ import zlib
 from typing import Callable, Dict, List, NamedTuple, Union
 
 import aiohttp
+import logging
 
 from .connection import Connection
 from .enums import GatewayEvent
@@ -209,8 +210,11 @@ class SocketHandler:
                 if not message.guild:
                     ch = connection.channel_cache.get(message.channel_id)
                     if not ch:
-                        dm = await message.author.create_dm()
-                        connection.channel_cache[dm.id] = dm
+                        try:
+                            dm = await message.author.create_dm()
+                            connection.channel_cache[dm.id] = dm
+                        except:
+                            pass
                 await self.dispatch(GatewayEvent.MESSAGE_CREATE, message)
 
             elif t == GatewayEvent.GUILD_CREATE:

@@ -7,6 +7,12 @@ __all__ = ("Intents", "Permissions", "UserFlags")
 
 class Flags:
 
+    __slots__ = (
+        "__items__",
+        "__settings__",
+        "value",
+    )
+
     __items__: Dict[str, int]
     __settings__: Dict[str, Any]
 
@@ -122,7 +128,7 @@ class Intents(Flags):
 
     @classmethod
     def all(cls) -> Intents:
-        return cls(**{k: True for k in cls.__items__})
+        return cls(131071)
 
     @classmethod
     def unprivileged(cls) -> Intents:
@@ -184,6 +190,9 @@ class Permissions(Flags):
     use_embedded_activities = 1 << 39
     moderate_members = 1 << 40
 
+    @classmethod
+    def all(cls: Permissions) -> Permissions:
+        return cls(2199023255551)
 
 class UserFlags(Flags):
     staff = 1 << 0

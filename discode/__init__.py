@@ -49,4 +49,5 @@ from .flags import *
 from .models import *
 from .app import *
 
+__title__ = "Discode"
 __version__ = "2.0.0b2"

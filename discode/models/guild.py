@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from ..utils import UNDEFINED
 from .abc import Snowflake
@@ -27,6 +27,7 @@ class Guild(Snowflake):
     __slots__ = (
         "id",
         "name",
+        "owner_id",
         "_members",
         "_channels",
         "_roles",
@@ -39,13 +40,9 @@ class Guild(Snowflake):
         self._connection = connection
         self.id: int = int(payload.pop("id", UNDEFINED))
         self.name: str = payload.pop("name", None)
+        self.owner_id: int = int(payload.pop("owner_id", UNDEFINED))
         self._icon: str = payload.pop("icon", None)
-        self._members: Dict[int, Member] = {}
-        for m in payload.pop("members", tuple()):
-            m["guild_id"] = self.id
-            mem = Member(connection, m)
-            self._add_member(mem)
-        self._channels: Dict = {}
+        self._channels: Dict[int, TextChannel] = {}
         for c in payload.pop("channels", tuple()):
             c["guild"] = self
             if c["type"] == 0:
@@ -56,6 +53,11 @@ class Guild(Snowflake):
             role = Role(connection, r)
             self._add_role(role)
         self._emojis: Dict[int, Emoji] = {}
+        self._members: Dict[int, Member] = {}
+        for m in payload.pop("members", tuple()):
+            m["guild"] = self
+            mem = Member(connection, m)
+            self._add_member(mem)
         for e in payload.pop("emojis", ()):
             emoji = Emoji(connection, e)
             self._emojis[emoji.id] = emoji
@@ -110,6 +112,9 @@ class Guild(Snowflake):
     @property
     def roles(self) -> List[Role]:
         return list(self._roles.values())
+
+    def get_role(self, role_id: int) -> Optional[Role]:
+        return self._roles.get(role_id)
 
     def _add_role(self, role):
         self._roles[role.id] = role
