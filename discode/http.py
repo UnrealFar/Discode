@@ -15,6 +15,7 @@ from .connection import Connection
 from .dataclasses import Embed, File
 from .models import ClientUser, Member, Message
 from .utils import UNDEFINED, get_event_loop
+from .app import Button
 
 if TYPE_CHECKING:
     from .client import Client
@@ -41,15 +42,12 @@ class HTTP:
     ):
         self.client: Client = client
         self.loop: asyncio.AbstractEventLoop = get_event_loop()
-        self.ratelimiter = Ratelimiter(self)
-
-    @property
-    def connection(self) -> Connection:
-        return self.client._connection
+        self.ratelimiter: Ratelimiter = Ratelimiter(self)
+        self.connection: Connection = None
 
     async def request(
         self,
-        method: str,
+        method: Literal["GET", "POST", "PATCH", "PUT", "DELETE"],
         path: str,
         *,
         form: Optional[List[Dict[str, Any]]] = UNDEFINED,
@@ -57,7 +55,7 @@ class HTTP:
         **kwargs,
     ) -> Any:
         if parameters == UNDEFINED:
-            parameters = dict()
+            parameters = {}
         route = Route(method, path, **parameters)
         url = route.url
         headers = kwargs.pop("headers", {})
@@ -168,6 +166,7 @@ class HTTP:
         file: File = UNDEFINED,
         embeds: List[Embed] = [],
         files: List[File] = [],
+        components: List[Button] = [],
     ) -> Message:
         kwargs = {}
 
@@ -254,7 +253,7 @@ class Route:  # ty @nerdguyahmad
 
     def __init__(
         self,
-        method: Literal["GET", "POST", "PATCH", "DELETE"],
+        method: Literal["GET", "POST", "PATCH", "PUT", "DELETE"],
         path: str,
         **parameters: Any,
     ):

@@ -19,7 +19,7 @@ owner_ids = (
 )
 bot = discode.Client(token=token)
 logger = logging.getLogger("discode")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 def get_info():
@@ -43,7 +43,9 @@ async def on_ready():
 
 @bot.on_event(discode.GatewayEvent.MESSAGE_CREATE)
 async def on_message(message: discode.Message):
-    print(message.author, ":", message)
+    if len(message.content) == 0:
+        return
+    print(message.author, ":", message.content)
     msg = message.content
 
     if msg.startswith("d!choose"):
@@ -111,5 +113,8 @@ async def on_message(message: discode.Message):
                 )
             )
 
+@bot.on_event("message_update")
+async def on_message_edit(before: discode.Message, after: discode.Message):
+    print(f"{before.author} edited their message from {before.content!r} to {after.content!r}")
 
 bot.run()

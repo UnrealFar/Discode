@@ -40,13 +40,16 @@ class Button:
         label: Optional[str] = UNDEFINED,
         style: Optional[Union[ButtonStyle, int]] = UNDEFINED,
         custom_id: Optional[str] = UNDEFINED,
-        callback: Optional[Callable] = UNDEFINED,
+        callback: Optional[Callable[Any]] = UNDEFINED,
         disabled: bool = False,
     ):
         if custom_id == UNDEFINED:
             custom_id = os.urandom(16).hex()
-        if (not asyncio.iscoroutinefunction(callback)) and (callback != UNDEFINED):
-            raise TypeError("Button callback can only be a coroutine.")
+        if (not asyncio.iscoroutinefunction(callback)):
+            if callback != UNDEFINED:
+                raise TypeError("Button callback can only be a coroutine.")
+            callback = lambda interaction: None
+            callback = asyncio.coroutine(callback)
         setattr(self, "callback", callback)
         self.type = 2
         self.label = label if label else None
@@ -60,10 +63,6 @@ class Button:
 
     def __bool__(self) -> bool:
         return not self.disabled
-
-    async def call(self, *args, **kwargs) -> Any:
-        if hasattr(self, "callback"):
-            return await self.callback()
 
     @classmethod
     def from_dict(cls: Button, payload: Dict[str, Any]):

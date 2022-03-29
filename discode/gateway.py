@@ -5,7 +5,7 @@ import json
 import sys
 import time
 import zlib
-from typing import Callable, Dict, List, NamedTuple, Union
+from typing import Callable, Dict, List, NamedTuple, Union, Optional
 
 import aiohttp
 import logging
@@ -14,6 +14,7 @@ from .connection import Connection
 from .enums import GatewayEvent
 from .models import Guild, Message
 
+_logger = logging.getLogger("discode")
 
 class OP:
     DISPATCH = 0
@@ -31,14 +32,16 @@ class OP:
     GUILD_SYNC = 12
 
 
-class Gateway:
-    def __init__(self, client):
+class Shard:
+    def __init__(self, client, url: str, *, shard_id: Optional[int] = None):
         self.client = client
         self.http = client._http
         self.connection = client._connection
         self.loop: asyncio.AbstractEventLoop = client.loop
         self.lock: asyncio.Lock = asyncio.Lock()
         self.handler: SocketHandler = SocketHandler(self)
+        self.shard_id: Optional[int] = shard_id
+        self.running: bool = False
 
         self.token: str = client.token
         self.intents = client.intents
@@ -49,6 +52,7 @@ class Gateway:
         self.buffer = bytearray()
         self.ZLIB_SUFFIX = b"\x00\x00\xff\xff"
         self._last_send: float = None
+        self.url: str = url
 
     @property
     def latency(self) -> float:
@@ -59,15 +63,8 @@ class Gateway:
             return (time.perf_counter() - self._last_send) < 0.5
         return False
 
-    def wait_for(self, event, check) -> DispatchListener:
-        fut = self.loop.create_future()
-        waiter = DispatchListener(event=event, future=fut, check=check)
-        self.handler.dispatch_listeners.append(waiter)
-        return waiter
-
-    async def _get_gateway(self, compress=True, v=9) -> str:
-        data = await self.http.request("GET", "/gateway")
-        url = data.get("url")
+    def _get_gateway_url(self, compress=True, v=9) -> str:
+        url = self.url
         url = f"{url}?encoding=json&v={v}"
         if compress:
             url = f"{url}&compress=zlib-stream"
@@ -86,13 +83,16 @@ class Gateway:
                         "$browser": "discode",
                         "$device": "discode",
                     },
+                    "shard": (self.shard_id, self.client.shard_count)
                 },
             }
         )
+        _logger.info("The gateway has sent the identify payload.")
 
     async def heartbeat(self):
         self.handler.last_hb = time.perf_counter()
         await self.send_json({"op": OP.HEARTBEAT, "d": self.sequence})
+        _logger.info("Keeping SHARD %s alive with sequence %s", self.shard_id, self.sequence)
 
     async def heartbeat_task(self, interval: float):
         while True:
@@ -103,7 +103,7 @@ class Gateway:
         self.options["version"] = version
         self.options["reconnect"] = reconnect
         self.options["compress"] = compress
-        url = await self._get_gateway(compress, version)
+        url = self._get_gateway_url(compress, version)
         self.ws = await self.session.ws_connect(url)
         await self.start()
 
@@ -151,41 +151,43 @@ class Gateway:
 
     async def start(self):
         await self.identify()
+        self.running = True
         while True:
             recv = await self.receive()
             self.loop.create_task(self.handler.handle_events(recv))
 
 
 class SocketHandler:
-    def __init__(self, gateway: Gateway):
-        self.gateway: Gateway = gateway
+    def __init__(self, shard: Shard):
+        self.shard: Shard = shard
         self.last_hb: int = int()
         self.latency: float = float("inf")
-        self.connection: Connection = gateway.connection
-        self.loop: asyncio.AbstractEventLoop = gateway.loop
-        self.dispatch_listeners: List[DispatchListener] = []
+        self.connection: Connection = shard.connection
+        self.loop: asyncio.AbstractEventLoop = shard.loop
         self.waiting_guilds: dict = {}
 
     async def dispatch(self, event, *args, **kwargs):
-        await self.gateway.client.dispatch(event, *args, **kwargs)
+        await self.shard.client.dispatch(event, *args, **kwargs)
         await self.check(event, *args, **kwargs)
 
     async def handle_events(self, payload: dict):
         if not isinstance(payload, dict):
             return
-        gateway = self.gateway
+        shard = self.shard
         connection = self.connection
-        gateway.sequence = payload.get("s")
+        shard.sequence = payload['s'] if 's' in payload else shard.sequence
         op = payload.get("op")
         data = payload.get("d")
         t = str(payload.get("t")).lower()
 
         if op == OP.HELLO:
             interval = data.get("heartbeat_interval") / 1000
-            self.hb_task = self.loop.create_task(gateway.heartbeat_task(interval))
+            self.hb_task = self.loop.create_task(shard.heartbeat_task(interval))
 
         elif op == OP.HEARTBEAT_ACK:
             self.latency = time.perf_counter() - self.last_hb
+            if self.latency > 10:
+                _logger.critical("High websocket latency. Shard ID %s is %.1fs behind.")
 
         elif op == OP.DISPATCH:
             await self.dispatch(GatewayEvent.DISPATCH, payload)
@@ -217,6 +219,13 @@ class SocketHandler:
                             pass
                 await self.dispatch(GatewayEvent.MESSAGE_CREATE, message)
 
+            elif t == GatewayEvent.MESSAGE_UPDATE:
+                before = connection.message_cache.get(int(data["id"]))
+                if before is not None:
+                    after = before.copy(**data)
+                    connection.message_cache[after.id] = after
+                    await self.dispatch(GatewayEvent.MESSAGE_UPDATE, before, after)
+
             elif t == GatewayEvent.GUILD_CREATE:
                 guild = Guild(connection, data)
                 if guild.id in self.waiting_guilds:
@@ -247,7 +256,8 @@ class SocketHandler:
                     )
 
     async def check(self, event: str, *args, **kwargs):
-        for listener in self.dispatch_listeners:
+        client = self.shard.client
+        for listener in client._dispatch_listeners:
             if listener.event == event:
                 check = listener.check
                 if asyncio.iscoroutinefunction(check):
@@ -256,7 +266,7 @@ class SocketHandler:
                     result = check(*args, **kwargs)
                 if result:
                     listener.future.set_result(0)
-                    self.dispatch_listeners.remove(listener)
+                    client._dispatch_listeners.remove(listener)
 
 
 class DispatchListener(NamedTuple):

@@ -1,3 +1,5 @@
+
+
 class GatewayEvent:
     r"""
     This class has all available gateway events, and information on how to register a listener for each of the events. An event maybe registered like this:
@@ -16,12 +18,14 @@ class GatewayEvent:
     GUILD_CREATE = "guild_create"
     r"Dispatched when the client joins a new guild, or the client receives data on a guild it is already in. This event takes 1 parameter- 'guild'"
     GUILD_UPDATE = "guild_update"
-    r"Dispatched when a guild that the client is already in gets updated. This event takes two parameters- 'before' and 'after'"
+    r"Dispatched when a guild that the client is already in gets updated. This event takes two parameters- 'before' & 'after'"
     GUILD_DELETE = "guild_delete"
     r"Dispatched when the client gets removed from a guild, or the guild itself gets deleted by the owner. This event takes 1 parameter- 'guild'"
     MESSAGE_CREATE = "message_create"
     r"Dispatched when a user / bot sends a message. This event takes 1 parameter- 'message'"
-
+    MESSAGE_UPDATE = "message_update"
+    r"Dispatched when a user/bot edits a message. This event takes 2 parameters- 'before' & 'after'"
+    MESSAGE_EDIT = MESSAGE_UPDATE
 
 class ButtonStyle:
     r"""Buttons come in a variety of styles to convey different types of actions. These styles also define what fields are valid for a button."""

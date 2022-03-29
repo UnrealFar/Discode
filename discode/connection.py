@@ -1,6 +1,7 @@
 from typing import Dict
 
 from .models import Guild, Message, User
+from .app import Button
 
 
 class Connection:
@@ -12,6 +13,7 @@ class Connection:
         self.guild_cache: Dict[int, Guild] = {}
         self.message_cache: Dict[int, Message] = {}
         self.channel_cache = {}
+        self.active_components: Dict[str, Button] = {}
 
     def get_user(self, user_id) -> User:
         return self.user_cache.get(user_id)

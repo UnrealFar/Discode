@@ -86,7 +86,7 @@ class Message(Snowflake):
         self.content = payload.pop("content", None)
         self.channel_id = int(payload.pop("channel_id"))
         self.guild_id = int(payload.pop("guild_id", UNDEFINED))
-        self.author_id = int(payload.pop("author").get("id", 0))
+        self.author_id = int(payload.pop("author", {}).get("id", 0))
         self._components = [
             component_from_dict(comp) for comp in payload.pop("components", ())
         ]
@@ -104,11 +104,28 @@ class Message(Snowflake):
                 if u:
                     self._mentions.append(u)
 
+    def copy(self, **options):
+        payload = {"id": self.id, "channel_id": options['channel_id']}
+        ret = Message(self._connection, payload)
+        ret.content = options.get("content")
+        ret.guild_id = ret.guild_id = self.guild_id
+        ret.author_id = self.author_id
+        if options.get("components") and len(options["components"] >= 1):
+            ret._components = [component_from_dict(comp) for comp in options["components"]]
+        ret.reference = self.reference
+        ms_data = options.pop("mentions", ())
+        if len(ms_data) >= 1:
+            for md in ms_data:
+                u = self._connection.get_user(int(md.get("id", UNDEFINED)))
+                if u:
+                    ret._mentions.append(u)
+        return ret
+
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id = {self.id} content = {self.content}"
 
     def __str__(self) -> str:
-        return self.content if self.content else ""
+        return self.content or ""
 
     @property
     def author(self) -> Union[User, Member]:

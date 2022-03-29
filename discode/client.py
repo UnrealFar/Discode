@@ -11,7 +11,7 @@ from . import utils
 from .connection import Connection
 from .enums import GatewayEvent
 from .flags import Intents, Permissions
-from .gateway import Gateway
+from .gateway import Shard, DispatchListener
 from .http import HTTP
 from .models import ClientUser, DMChannel, Guild, Message, TextChannel, User
 
@@ -51,19 +51,28 @@ class Client:
         intents: Optional[Intents] = None,
         loop: asyncio.AbstractEventLoop = None,
         api_version: Optional[int] = 10,
+        shard_count: Optional[int] = None,
     ):
+        if shard_count is not None and shard_count < 1:
+            raise ValueError("Number of shards must be greater than or equal to 1.")
         self.token: str = token.strip()
         self.loop: asyncio.AbstractEventLoop = loop if loop else utils.get_event_loop()
         self.intents: Intents = intents if intents else Intents.all()
         self.api_version: int = int(api_version)
         self._http: HTTP = HTTP(self)
         self._connection: Connection = Connection(self)
+        self._http.connection = self._connection
         self._listeners: Dict[str, Any] = {}
+        self._dispatch_listeners: List[DispatchListener] = []
+        self._shards: Dict[int, Shard] = {}
+        self.shard_count: Optional[int] = shard_count
+        self.max_concurrency: Optional[int] = None
 
     @property
     def latency(self) -> float:
-        r""":class:`float`: The latency of the websocket connection."""
-        return self._ws.latency
+        r""":class:`float`: The average latency of the websocket connection over all the shards."""
+        latencies = tuple(s.latency for s in self._shards.values())
+        return sum(latencies) / len(self._shards)
 
     @property
     def user(self) -> ClientUser:
@@ -118,8 +127,17 @@ class Client:
         """
         self._user = await self._http.login()
         ws_options = kwargs.pop("ws_options", {})
-        self._ws: Gateway = Gateway(self)
-        await self._ws.connect(**ws_options)
+        gw_data = await self._http.request("GET", "/gateway/bot")
+
+        self.max_concurrency = gw_data['session_start_limit']['max_concurrency']
+
+        if self.shard_count is None:
+            self.shard_count = gw_data['shards']
+
+        for g_id in range(self.shard_count):
+            g = Shard(self, url = gw_data['url'], shard_id = g_id)
+            self._shards[g_id] = g
+            await g.connect(**ws_options)
 
     def run(self, *args, **kwargs):
         r"""The is method is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine.
@@ -259,7 +277,9 @@ class Client:
             The timeout has finished.
         """
         event = event.lower()
-        listener = self._ws.wait_for(event, check)
+        fut = self.loop.create_future()
+        listener = DispatchListener(event=event, future=fut, check=check)
+        self._dispatch_listeners.append(listener)
         fut = listener.future
         try:
             return await asyncio.wait_for(fut, timeout=timeout)
