@@ -26,12 +26,16 @@ _logger = logging.getLogger("discode")
 
 
 async def json_or_text(response: aiohttp.ClientResponse) -> str:
-    t = await response.text("utf-8")
     try:
-        return json.dumps(t)
+        return await response.json()
     except:
-        return t
+        return await response.text("utf-8")
 
+async def unlocker(path: str, retry_after: float, lock: asyncio.Lock):
+    fmt = f"Request limit for path: {path!r} has been exhausted. Delaying this request by {retry_after}seconds."
+    _logger.warning(fmt)
+    await asyncio.sleep(retry_after)
+    lock.release()
 
 class HTTP:
     BASE_URL = "https://discord.com/api/v10"
@@ -92,18 +96,13 @@ class HTTP:
 
                 if remaining == "0" and status != 429:
                     retry_after = float(h["X-Ratelimit-Reset-After"])
-                    fmt = f"Request limit for path: {path!r} has been exhausted. Delaying this request by {retry_after}seconds."
-                    _logger.warning(fmt)
                     unlock = False
 
-                    async def unlocker():
-                        await asyncio.sleep(retry_after)
-                        path_lock.release()
-
-                    self.loop.create_task(unlocker())
+                    await unlocker(path, retry_after, path_lock)
 
                 if 300 > status >= 200:
-                    path_lock.release()
+                    if unlock is True:
+                        path_lock.release()
                     return await req.json()
 
                 elif status == 429:
@@ -126,7 +125,7 @@ class HTTP:
                         self.ratelimiter._set_global()
                     else:
                         fmt = f"We are being rate limited. Retrying in {retry_after} seconds."
-                        _logger.critical(fmt)
+                        _logger.warning(fmt)
 
                     await asyncio.sleep(retry_after)
                     _logger.debug("Done sleeping for the rate limit. Retrying...")
@@ -138,7 +137,7 @@ class HTTP:
                     continue
                 else:
                     raise Exception(data.get("message"))
-            if unlock and path_lock is not None:
+            if unlock is True and isinstance(path_lock, asyncio.Lock):
                 if path_lock.locked():
                     path_lock.release()
 

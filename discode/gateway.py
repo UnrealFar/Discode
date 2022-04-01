@@ -5,7 +5,7 @@ import json
 import sys
 import time
 import zlib
-from typing import Callable, Dict, List, NamedTuple, Union, Optional
+from typing import Callable, Dict, List, NamedTuple, Union, Optional, TYPE_CHECKING
 
 import aiohttp
 import logging
@@ -13,6 +13,9 @@ import logging
 from .connection import Connection
 from .enums import GatewayEvent
 from .models import Guild, Message
+
+if TYPE_CHECKING:
+    from .client import Client
 
 _logger = logging.getLogger("discode")
 
@@ -31,16 +34,49 @@ class OP:
     HEARTBEAT_ACK = 11
     GUILD_SYNC = 12
 
-
 class Shard:
-    def __init__(self, client, url: str, *, shard_id: Optional[int] = None):
-        self.client = client
+    __slots__ = (
+        "client",
+        "_id",
+        "_ws",
+        "_ready",
+    )
+
+    def __init__(self, client, url: str, *, shard_id: int):
+        self._id: int = shard_id
+        self.client: Client = client
+        self._ws: Gateway = Gateway(self, url, shard_id = shard_id)
+        self._ready: asyncio.Event = self._ws._ready
+
+    @property
+    def latency(self) -> float:
+        return self._ws.get_latency()
+
+    @property
+    def id(self) -> int:
+        return self._id
+
+    async def connect(
+        self,
+        *,
+        gateway_version: int = 10,
+        gatewat_compress: bool = True,
+        gateway_reconnect = True,
+    ):
+        await self._ws.connect(gateway_version, gatewat_compress, gateway_reconnect)
+
+    async def close(self):
+        await self._ws.close()
+
+class Gateway:
+    def __init__(self, shard, url: str, *, shard_id: Optional[int] = None):
+        self.client = client = shard.client
         self.http = client._http
         self.connection = client._connection
         self.loop: asyncio.AbstractEventLoop = client.loop
         self.lock: asyncio.Lock = asyncio.Lock()
         self.handler: SocketHandler = SocketHandler(self)
-        self.shard_id: Optional[int] = shard_id
+        self.shard_id: Optional[int] = shard.id
         self.running: bool = False
 
         self.token: str = client.token
@@ -52,10 +88,11 @@ class Shard:
         self.buffer = bytearray()
         self.ZLIB_SUFFIX = b"\x00\x00\xff\xff"
         self._last_send: float = None
+        self._ready: asyncio.Event = asyncio.Event()
+        self._identified: asyncio.Event = asyncio.Event()
         self.url: str = url
 
-    @property
-    def latency(self) -> float:
+    def get_latency(self) -> float:
         return self.handler.latency
 
     def is_ratelimited(self) -> bool:
@@ -63,7 +100,7 @@ class Shard:
             return (time.perf_counter() - self._last_send) < 0.5
         return False
 
-    def _get_gateway_url(self, compress=True, v=9) -> str:
+    def _get_gateway_url(self, compress=True, v=10) -> str:
         url = self.url
         url = f"{url}?encoding=json&v={v}"
         if compress:
@@ -87,7 +124,7 @@ class Shard:
                 },
             }
         )
-        _logger.info("The gateway has sent the identify payload.")
+        _logger.debug("Shard ID %s has sent the identify payload.", self.shard_id)
 
     async def heartbeat(self):
         self.handler.last_hb = time.perf_counter()
@@ -96,16 +133,20 @@ class Shard:
 
     async def heartbeat_task(self, interval: float):
         while True:
-            await self.heartbeat()
-            await asyncio.sleep(interval)
+            if not self.ws.closed:
+                await self.heartbeat()
+                await asyncio.sleep(interval)
 
-    async def connect(self, version=9, compress=True, reconnect=True):
+    async def connect(self, version=10, compress=True, reconnect=True):
         self.options["version"] = version
         self.options["reconnect"] = reconnect
         self.options["compress"] = compress
         url = self._get_gateway_url(compress, version)
         self.ws = await self.session.ws_connect(url)
         await self.start()
+
+    async def close(self):
+        await self.ws.close()
 
     async def receive(self) -> dict:
         data = await self.ws.receive()
@@ -174,6 +215,7 @@ class SocketHandler:
         if not isinstance(payload, dict):
             return
         shard = self.shard
+        client = shard.connection
         connection = self.connection
         shard.sequence = payload['s'] if 's' in payload else shard.sequence
         op = payload.get("op")
@@ -201,10 +243,11 @@ class SocketHandler:
                     fut = self.loop.create_future()
                     self.waiting_guilds[ug_id] = fut
                     try:
-                        await asyncio.wait_for(fut, timeout=2)
+                        await asyncio.wait_for(fut, timeout=1)
                     except asyncio.TimeoutError:
                         pass
-                await self.dispatch(GatewayEvent.READY)
+                shard._ready.set()
+                await self.dispatch(GatewayEvent.SHARD_READY, shard.shard_id)
 
             elif t == GatewayEvent.MESSAGE_CREATE:
                 message = Message(connection, data)

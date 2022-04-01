@@ -15,6 +15,8 @@ class GatewayEvent:
     r"Dispatch is called whenever the websocket receives an event. Listeners waiting for dispatch must have 1 parameter- 'payload'"
     READY = "ready"
     r"Dispatched when the client is completely ready. Listeners waiting for this event must not have any parameters."
+    SHARD_READY = "shard_ready"
+    r"Dispatched when a shard is ready. This event takes 1 parameter- 'shard_id'"
     GUILD_CREATE = "guild_create"
     r"Dispatched when the client joins a new guild, or the client receives data on a guild it is already in. This event takes 1 parameter- 'guild'"
     GUILD_UPDATE = "guild_update"

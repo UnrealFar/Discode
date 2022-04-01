@@ -19,8 +19,7 @@ owner_ids = (
 )
 bot = discode.Client(token=token)
 logger = logging.getLogger("discode")
-logger.setLevel(logging.INFO)
-
+logger.setLevel(logging.NOTSET)
 
 def get_info():
     ret = f"Intents: {bot.intents.value}\nLatency: {round(bot.latency * 1000, 2)}ms\nGuilds: {len(bot.guilds)}\nUsers: {len(bot.users)}"
@@ -29,6 +28,10 @@ def get_info():
 
 @discode.utils.async_function
 def run_docs(make=False):
+    try:
+        __import__("sphinx")
+    except:
+        os.system("pip install sphinx furo")
     if make:
         os.system("cd docs\nmake html\ncd\ncd discode")
     return os.system("python -m http.server -d docs/_build/html")
@@ -38,8 +41,11 @@ def run_docs(make=False):
 async def on_ready():
     print(get_info())
     print(bot.user, "is ready!")
-    # bot.loop.create_task(run_docs(make=True))
+    await run_docs(make=True)
 
+@bot.on_event(discode.GatewayEvent.SHARD_READY)
+async def on_shard_ready(shard_id):
+    print(f"SHARD ID {shard_id} is ready!")
 
 @bot.on_event(discode.GatewayEvent.MESSAGE_CREATE)
 async def on_message(message: discode.Message):

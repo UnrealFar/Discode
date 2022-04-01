@@ -6,6 +6,7 @@ import asyncio
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Union, TypeVar
 
 import aiohttp
+import logging
 
 from . import utils
 from .connection import Connection
@@ -17,6 +18,7 @@ from .models import ClientUser, DMChannel, Guild, Message, TextChannel, User
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
+_logger = logging.getLogger("discode")
 
 class Client:
 
@@ -49,14 +51,14 @@ class Client:
         token: str,
         *,
         intents: Optional[Intents] = None,
-        loop: asyncio.AbstractEventLoop = None,
         api_version: Optional[int] = 10,
         shard_count: Optional[int] = None,
+        gateway_timeout: Optional[int] = 5
     ):
         if shard_count is not None and shard_count < 1:
             raise ValueError("Number of shards must be greater than or equal to 1.")
         self.token: str = token.strip()
-        self.loop: asyncio.AbstractEventLoop = loop if loop else utils.get_event_loop()
+        self.loop: asyncio.AbstractEventLoop = None
         self.intents: Intents = intents if intents else Intents.all()
         self.api_version: int = int(api_version)
         self._http: HTTP = HTTP(self)
@@ -65,14 +67,22 @@ class Client:
         self._listeners: Dict[str, Any] = {}
         self._dispatch_listeners: List[DispatchListener] = []
         self._shards: Dict[int, Shard] = {}
+        self._ready: asyncio.Event = asyncio.Event()
         self.shard_count: Optional[int] = shard_count
         self.max_concurrency: Optional[int] = None
+        self.gatewat_timeout: float = gateway_timeout
+        self.__closed: asyncio.Event = None
 
     @property
     def latency(self) -> float:
         r""":class:`float`: The average latency of the websocket connection over all the shards."""
         latencies = tuple(s.latency for s in self._shards.values())
         return sum(latencies) / len(self._shards)
+
+    @property
+    def is_ready(self) -> bool:
+        r":class:`bool` Whether the client is completely ready for use or no."
+        return self._ready.is_set()
 
     @property
     def user(self) -> ClientUser:
@@ -116,6 +126,15 @@ class Client:
         r""":class:`aiohttp.ClientSession`: The client session used by the http client for making requests to the Discord API."""
         return self._http._session
 
+    async def wait_until_ready(self) -> None:
+        await self._ready.wait()
+
+    async def __dispatch_ready(self) -> None:
+        for shard in self._shards.values():
+            await shard._ready.wait()
+        self._ready.set()
+        await self.dispatch(GatewayEvent.READY)
+
     async def run_task(self, *args, **kwargs) -> Client:
         r"""This method is a coroutine. It is used to start the client, i.e., connect to gateway API and the REST API.
         It prepares the client completely.
@@ -125,6 +144,8 @@ class Client:
         :class:`Client`
             The client itself.
         """
+        self.loop = utils.get_event_loop()
+        self.__closed = asyncio.Event(loop = self.loop)
         self._user = await self._http.login()
         ws_options = kwargs.pop("ws_options", {})
         gw_data = await self._http.request("GET", "/gateway/bot")
@@ -135,9 +156,21 @@ class Client:
             self.shard_count = gw_data['shards']
 
         for g_id in range(self.shard_count):
-            g = Shard(self, url = gw_data['url'], shard_id = g_id)
-            self._shards[g_id] = g
-            await g.connect(**ws_options)
+            self._shards[g_id] = Shard(self, url = gw_data['url'], shard_id = g_id)
+
+        shards_to_launch = list(self._shards.values())
+        while len(shards_to_launch) >= 1:
+            try:
+                to_launch = shards_to_launch[0]
+            except IndexError:
+                break
+            shards_to_launch.remove(to_launch)
+            asyncio.create_task(to_launch.connect(**ws_options), name = f'discode:shard{to_launch._id}.connect()')
+
+        asyncio.create_task(self.__dispatch_ready(), name='discode:client.__dispatch_ready()')
+
+        await self.__closed.wait()
+        return self
 
     def run(self, *args, **kwargs):
         r"""The is method is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine.
@@ -150,34 +183,14 @@ class Client:
         :class:`Client`
             The client itself.
         """
-        loop = self.loop
-
-        async def runner():
-            await self.run_task(*args, **kwargs)
-
-        def stop(f):
-            asyncio.ensure_future(self.close())
-            loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=loop)
-        future.add_done_callback(stop)
-        try:
-            loop.run_forever()
-        except KeyboardInterrupt:
-            pass
-        finally:
-            future.remove_done_callback(stop)
-            return self
+        return asyncio.run(self.run_task(*args, **kwargs))
 
     async def close(self) -> None:
         r"""Closes the client, the http client, and the gateway connection."""
         await self._http.logout()
         await self._http.close()
-        for task in asyncio.all_tasks():
-            try:
-                task.cancel()
-            except:
-                pass
+        for shard in self._shards.values():
+            await shard.close()
         for listener in self._ws.handler.dispatch_listeners:
             fut = listener.future
             fut.cancel()
@@ -242,11 +255,12 @@ class Client:
 
     async def dispatch(self, event, *args, **kwargs):
         ev = getattr(self, f"on_{event}", None)
+        loop = self.loop
         if asyncio.iscoroutinefunction(ev):
-            await ev(*args, **kwargs)
+            asyncio.ensure_future(ev(*args, **kwargs), loop = loop)
         listeners = self._listeners.get(event, [])
         for l in listeners:
-            self.loop.create_task(l(*args, **kwargs))
+            asyncio.ensure_future(l(*args, **kwargs), loop = loop)
 
     async def wait_for(
         self,
