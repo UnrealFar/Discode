@@ -128,3 +128,15 @@ Dataclasses
 
    {% endif %}
 {% endfor %}
+
+Sharding
+--------
+
+One of the useful features of sharding is that Discode provides it by default.
+
+Shard Object
+~~~~~~~~~~~~
+
+.. autoclass:: discode.gateway.Shard
+    :members:
+    :undoc-members:

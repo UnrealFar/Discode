@@ -53,7 +53,7 @@ class Client:
         intents: Optional[Intents] = None,
         api_version: Optional[int] = 10,
         shard_count: Optional[int] = None,
-        gateway_timeout: Optional[int] = 5
+        gateway_timeout: Optional[float] = 5.00,
     ):
         if shard_count is not None and shard_count < 1:
             raise ValueError("Number of shards must be greater than or equal to 1.")
@@ -70,7 +70,7 @@ class Client:
         self._ready: asyncio.Event = asyncio.Event()
         self.shard_count: Optional[int] = shard_count
         self.max_concurrency: Optional[int] = None
-        self.gatewat_timeout: float = gateway_timeout
+        self.gateway_timeout: float = gateway_timeout
         self.__closed: asyncio.Event = None
 
     @property
@@ -137,7 +137,7 @@ class Client:
 
     async def __dispatch_ready(self) -> None:
         for shard in self._shards.values():
-            await shard._ready.wait()
+            await shard.wait_until_ready()
         self._ready.set()
         await self.dispatch(GatewayEvent.READY)
 
@@ -156,7 +156,7 @@ class Client:
         ws_options = kwargs.pop("ws_options", {})
         gw_data = await self._http.request("GET", "/gateway/bot")
 
-        self.max_concurrency = gw_data['session_start_limit']['max_concurrency']
+        self.max_concurrency = max_concurrency = gw_data['session_start_limit']['max_concurrency']
 
         if self.shard_count is None:
             self.shard_count = gw_data['shards']
@@ -164,16 +164,26 @@ class Client:
         for g_id in range(self.shard_count):
             self._shards[g_id] = Shard(self, url = gw_data['url'], shard_id = g_id)
 
+        to_identify: List[Shard] = []
         shards_to_launch = list(self._shards.values())
         while len(shards_to_launch) >= 1:
-            try:
-                to_launch = shards_to_launch[0]
-            except IndexError:
-                break
-            shards_to_launch.remove(to_launch)
-            asyncio.create_task(to_launch.connect(**ws_options), name = f'discode:shard{to_launch._id}.connect()')
+            for _ in range(max_concurrency):
+                try:
+                    to_launch = shards_to_launch[0]
+                except IndexError:
+                    break
+                shards_to_launch.remove(to_launch)
+                to_identify.append(to_launch)
+                asyncio.create_task(to_launch.connect(**ws_options), name = f'discode:shard{to_launch.id}.connect()')
+            await asyncio.sleep(5)
 
         asyncio.create_task(self.__dispatch_ready(), name='discode:client.__dispatch_ready()')
+
+        for t in to_identify:
+            try:
+                await asyncio.wait_for(to_launch._ws._identified.wait(), timeout = self.gateway_timeout)
+            except asyncio.TimeoutError:
+                _logger.error("Timed out waiting for Shard %s to start.", to_launch.id)
 
         await self.__closed.wait()
         return self

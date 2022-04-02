@@ -37,16 +37,12 @@ class OP:
 class Shard:
     __slots__ = (
         "client",
-        "_id",
         "_ws",
-        "_ready",
     )
 
     def __init__(self, client, url: str, *, shard_id: int):
-        self._id: int = shard_id
         self.client: Client = client
         self._ws: Gateway = Gateway(self, url, shard_id = shard_id)
-        self._ready: asyncio.Event = self._ws._ready
 
     @property
     def latency(self) -> float:
@@ -54,16 +50,19 @@ class Shard:
 
     @property
     def id(self) -> int:
-        return self._id
+        return self._ws.shard_id
+
+    async def wait_until_ready(self):
+        return await self._ws._ready.wait()
 
     async def connect(
         self,
         *,
         gateway_version: int = 10,
-        gatewat_compress: bool = True,
-        gateway_reconnect = True,
+        compress: bool = True,
+        reconnect = True,
     ):
-        await self._ws.connect(gateway_version, gatewat_compress, gateway_reconnect)
+        await self._ws.connect(gateway_version, compress, reconnect)
 
     async def close(self):
         await self._ws.close()
@@ -76,7 +75,7 @@ class Gateway:
         self.loop: asyncio.AbstractEventLoop = client.loop
         self.lock: asyncio.Lock = asyncio.Lock()
         self.handler: SocketHandler = SocketHandler(self)
-        self.shard_id: Optional[int] = shard.id
+        self.shard_id: Optional[int] = shard_id
         self.running: bool = False
 
         self.token: str = client.token
@@ -199,37 +198,48 @@ class Gateway:
 
 
 class SocketHandler:
-    def __init__(self, shard: Shard):
-        self.shard: Shard = shard
+    __slots__ = (
+        "gateway",
+        "connection",
+        "latency",
+        "last_hb",
+        "hb_task",
+        "loop",
+        "waiting_guilds"
+    )
+    def __init__(self, gateway: Gateway):
+        self.gateway: Gateway = gateway
         self.last_hb: int = int()
         self.latency: float = float("inf")
-        self.connection: Connection = shard.connection
-        self.loop: asyncio.AbstractEventLoop = shard.loop
+        self.connection: Connection = gateway.connection
+        self.loop: asyncio.AbstractEventLoop = gateway.loop
         self.waiting_guilds: dict = {}
+        self.hb_task: asyncio.Task = None
 
     async def dispatch(self, event, *args, **kwargs):
-        await self.shard.client.dispatch(event, *args, **kwargs)
+        await self.gateway.client.dispatch(event, *args, **kwargs)
         await self.check(event, *args, **kwargs)
 
     async def handle_events(self, payload: dict):
         if not isinstance(payload, dict):
             return
-        shard = self.shard
-        client = shard.connection
+        gateway = self.gateway
+        client = gateway.client
         connection = self.connection
-        shard.sequence = payload['s'] if 's' in payload else shard.sequence
+        gateway.sequence = payload['s'] if 's' in payload else gateway.sequence
         op = payload.get("op")
         data = payload.get("d")
         t = str(payload.get("t")).lower()
 
         if op == OP.HELLO:
+            gateway._identified.set()
             interval = data.get("heartbeat_interval") / 1000
-            self.hb_task = self.loop.create_task(shard.heartbeat_task(interval))
+            self.hb_task = asyncio.create_task(gateway.heartbeat_task(interval))
 
         elif op == OP.HEARTBEAT_ACK:
             self.latency = time.perf_counter() - self.last_hb
             if self.latency > 10:
-                _logger.critical("High websocket latency. Shard ID %s is %.1fs behind.")
+                _logger.critical("High websocket latency. Shard ID %s is %.1fs behind.", gateway.shard_id, self.latency)
 
         elif op == OP.DISPATCH:
             await self.dispatch(GatewayEvent.DISPATCH, payload)
@@ -246,8 +256,8 @@ class SocketHandler:
                         await asyncio.wait_for(fut, timeout=1)
                     except asyncio.TimeoutError:
                         pass
-                shard._ready.set()
-                await self.dispatch(GatewayEvent.SHARD_READY, shard.shard_id)
+                gateway._ready.set()
+                await self.dispatch(GatewayEvent.SHARD_READY, gateway.shard_id)
 
             elif t == GatewayEvent.MESSAGE_CREATE:
                 message = Message(connection, data)
@@ -299,7 +309,7 @@ class SocketHandler:
                     )
 
     async def check(self, event: str, *args, **kwargs):
-        client = self.shard.client
+        client = self.gateway.client
         for listener in client._dispatch_listeners:
             if listener.event == event:
                 check = listener.check
