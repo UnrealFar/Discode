@@ -126,7 +126,13 @@ class Client:
         r""":class:`aiohttp.ClientSession`: The client session used by the http client for making requests to the Discord API."""
         return self._http._session
 
-    async def wait_until_ready(self) -> None:
+    @property
+    def shards(self) -> List[Shard]:
+        r"""List[:class:`Shard`]: All the shards connected to the gateway."""
+        return list(self._shards.values())
+
+    async def wait_until_ready(self) -> Client:
+        r""":class:`Client`: Wait until the bot is completely ready to use."""
         await self._ready.wait()
 
     async def __dispatch_ready(self) -> None:
@@ -173,10 +179,9 @@ class Client:
         return self
 
     def run(self, *args, **kwargs):
-        r"""The is method is similar to :meth:`Client.run_task()` but is a normal function and not a coroutine.
-        The library recommends users to use this to start the bot as this function handles closing the client without raising any errors and runs till the client is alive.
+        r"""Synchronous alternative to :meth:`Client.run_task()`. Uses :meth:`asyncio.run()` internally to run the bot.
 
-        .. warning:: Code written after this function is called will most probably not get executed till the bot stops.
+        .. warning:: Code written after this function is called will not get executed till the bot stops.
 
         Returns
         -------
