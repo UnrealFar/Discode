@@ -58,7 +58,7 @@ class Shard:
     async def connect(
         self,
         *,
-        gateway_version: int = 10,
+        gateway_version: int = 9,
         compress: bool = True,
         reconnect = True,
     ):
@@ -99,7 +99,7 @@ class Gateway:
             return (time.perf_counter() - self._last_send) < 0.5
         return False
 
-    def _get_gateway_url(self, compress=True, v=10) -> str:
+    def _get_gateway_url(self, compress=True, v=9) -> str:
         url = self.url
         url = f"{url}?encoding=json&v={v}"
         if compress:
@@ -136,7 +136,7 @@ class Gateway:
                 await self.heartbeat()
                 await asyncio.sleep(interval)
 
-    async def connect(self, version=10, compress=True, reconnect=True):
+    async def connect(self, version=9, compress=True, reconnect=True):
         self.options["version"] = version
         self.options["reconnect"] = reconnect
         self.options["compress"] = compress

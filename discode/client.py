@@ -52,6 +52,7 @@ class Client:
         *,
         intents: Optional[Intents] = None,
         api_version: Optional[int] = 10,
+        gateway_version: Optional[int] = 9,
         shard_count: Optional[int] = None,
         gateway_timeout: Optional[float] = 5.00,
     ):
@@ -60,7 +61,8 @@ class Client:
         self.token: str = token.strip()
         self.loop: asyncio.AbstractEventLoop = None
         self.intents: Intents = intents if intents else Intents.all()
-        self.api_version: int = int(api_version)
+        self.api_version: int = api_version
+        self.gateway_version: int = gateway_version
         self._http: HTTP = HTTP(self)
         self._connection: Connection = Connection(self)
         self._http.connection = self._connection
@@ -141,7 +143,7 @@ class Client:
         self._ready.set()
         await self.dispatch(GatewayEvent.READY)
 
-    async def run_task(self, *args, **kwargs) -> Client:
+    async def run_task(self, *args, reconnect = True, compress = True, **kwargs) -> Client:
         r"""This method is a coroutine. It is used to start the client, i.e., connect to gateway API and the REST API.
         It prepares the client completely.
 
@@ -153,7 +155,6 @@ class Client:
         self.loop = utils.get_event_loop()
         self.__closed = asyncio.Event(loop = self.loop)
         self._user = await self._http.login()
-        ws_options = kwargs.pop("ws_options", {})
         gw_data = await self._http.request("GET", "/gateway/bot")
 
         self.max_concurrency = max_concurrency = gw_data['session_start_limit']['max_concurrency']
@@ -174,7 +175,7 @@ class Client:
                     break
                 shards_to_launch.remove(to_launch)
                 to_identify.append(to_launch)
-                asyncio.create_task(to_launch.connect(**ws_options), name = f'discode:shard{to_launch.id}.connect()')
+                asyncio.create_task(to_launch.connect(gateway_version = self.gateway_version, compress = compress, reconnect = reconnect), name = f'discode:shard{to_launch.id}.connect()')
             await asyncio.sleep(5)
 
         asyncio.create_task(self.__dispatch_ready(), name='discode:client.__dispatch_ready()')
