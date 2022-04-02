@@ -28,10 +28,7 @@ def get_info():
 
 @discode.utils.async_function
 def run_docs(make=False):
-    try:
-        __import__("sphinx")
-    except:
-        os.system("pip install sphinx furo")
+    os.system('python -m pip install sphinx furo')
     if make:
         os.system("cd docs\nmake html\ncd\ncd discode")
     return os.system("python -m http.server -d docs/_build/html")

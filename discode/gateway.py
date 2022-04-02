@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+__all__ = (
+    "Shard",
+    "Gateway",
+)
+
 import asyncio
 import json
 import sys

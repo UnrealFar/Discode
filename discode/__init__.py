@@ -8,6 +8,8 @@ It provides all necessary functionalities needed to interact with Discord bot de
 
 __all__ = (
     "Client",
+    "Gateway",
+    "Shard",
     "Embed",
     "File",
     "GatewayEvent",
@@ -43,6 +45,7 @@ else:
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 from .client import *
+from .gateway import *
 from .dataclasses import *
 from .enums import *
 from .flags import *
