@@ -16,6 +16,7 @@ from .dataclasses import Embed, File
 from .models import ClientUser, Member, Message
 from .utils import UNDEFINED, get_event_loop
 from .app import Button
+from . import exceptions
 
 if TYPE_CHECKING:
     from .client import Client
@@ -114,7 +115,7 @@ class HTTP:
                             raise Exception(
                                 "You have been banned by Cloudflare from accessing the Discord API."
                             )
-                        raise Exception(data)
+                        raise exceptions.http_error(429, data)
 
                     _global = data.get("global", False)
                     retry_after = data.get("retry_after")

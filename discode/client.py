@@ -153,7 +153,7 @@ class Client:
             The client itself.
         """
         self.loop = utils.get_event_loop()
-        self.__closed = asyncio.Event(loop = self.loop)
+        self.__closed = asyncio.Event()
         self._user = await self._http.login()
         gw_data = await self._http.request("GET", "/gateway/bot")
 
@@ -175,16 +175,20 @@ class Client:
                     break
                 shards_to_launch.remove(to_launch)
                 to_identify.append(to_launch)
-                asyncio.create_task(to_launch.connect(gateway_version = self.gateway_version, compress = compress, reconnect = reconnect), name = f'discode:shard{to_launch.id}.connect()')
+                asyncio.create_task(
+                    to_launch.connect(
+                        gateway_version = self.gateway_version, compress = compress, reconnect = reconnect
+                    ), name = f'discode:shard{to_launch.id}.connect()'
+                )
             await asyncio.sleep(5)
 
         asyncio.create_task(self.__dispatch_ready(), name='discode:client.__dispatch_ready()')
 
         for t in to_identify:
             try:
-                await asyncio.wait_for(to_launch._ws._identified.wait(), timeout = self.gateway_timeout)
+                await asyncio.wait_for(t._ws._identified.wait(), timeout = self.gateway_timeout)
             except asyncio.TimeoutError:
-                _logger.error("Timed out waiting for Shard %s to start.", to_launch.id)
+                _logger.error("Timed out waiting for Shard %s to identify.", t.id)
 
         await self.__closed.wait()
         return self
@@ -210,6 +214,7 @@ class Client:
         for listener in self._ws.handler.dispatch_listeners:
             fut = listener.future
             fut.cancel()
+        self.__closed.set()
 
     def on_event(self, event: Union[str, GatewayEvent]) -> Coro:
         r"""Decorator to register event listeners to the client. The function decorated must be a coroutine. This decorator uses :meth:`Client.add_listener()` to register the listener.

@@ -44,6 +44,7 @@ except:
 else:
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
+from .exceptions import *
 from .client import *
 from .gateway import *
 from .dataclasses import *

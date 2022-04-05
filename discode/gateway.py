@@ -133,7 +133,7 @@ class Gateway:
     async def heartbeat(self):
         self.handler.last_hb = time.perf_counter()
         await self.send_json({"op": OP.HEARTBEAT, "d": self.sequence})
-        _logger.info("Keeping SHARD %s alive with sequence %s", self.shard_id, self.sequence)
+        _logger.info("Keeping Shard %s alive with sequence %s", self.shard_id, self.sequence)
 
     async def heartbeat_task(self, interval: float):
         while True:
@@ -170,7 +170,7 @@ class Gateway:
             self.buffer = bytearray()
 
         if isinstance(data, int):
-            raise TypeError(f"Received an int: {data}")
+            raise TypeError(f"Received a close code: {data}")
 
         try:
             data = json.loads(data)
